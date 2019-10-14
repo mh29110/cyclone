@@ -163,7 +163,7 @@ bool Packet::build(size_t head_size, RingBuf& ring_buf)
 
 	_resize(head_size, packet_size);
 
-	return (m_memory_size==ring_buf.memcpy_out(m_memory_buf, m_memory_size));
+	return (m_memory_size==ring_buf.memcpyOut(m_memory_buf, m_memory_size));
 }
 
 }

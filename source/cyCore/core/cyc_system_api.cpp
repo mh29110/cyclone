@@ -27,7 +27,7 @@ namespace sys_api
 {
 
 //-------------------------------------------------------------------------------------
-pid_t process_get_id(void)
+pid_t processGetID(void)
 {
 #ifdef CY_SYS_WINDOWS
 	return (pid_t)::GetCurrentProcessId();
@@ -37,7 +37,7 @@ pid_t process_get_id(void)
 }
 
 //-------------------------------------------------------------------------------------
-void process_get_module_name(char* module_name, size_t max_size)
+void processGetModuleName(char* module_name, size_t max_size)
 {
 #ifdef CY_SYS_WINDOWS
 	char process_path_name[MAX_PATH] = { 0 };
@@ -47,7 +47,7 @@ void process_get_module_name(char* module_name, size_t max_size)
 
 	#ifdef CY_SYS_MACOS
 		char process_path_name[PROC_PIDPATHINFO_MAXSIZE] = { 0 };
-		proc_pidpath(process_get_id(), process_path_name, PROC_PIDPATHINFO_MAXSIZE);
+		proc_pidpath(processGetID(), process_path_name, PROC_PIDPATHINFO_MAXSIZE);
 	#else
 		char process_path_name[256] = { 0 };
 		if (readlink("/proc/self/exe", process_path_name, 256)<0) {
@@ -80,13 +80,13 @@ struct thread_data_s
 static thread_local thread_data_s* s_thread_data = nullptr;
 
 //-------------------------------------------------------------------------------------
-thread_id_t thread_get_current_id(void)
+thread_id_t threadGetCurrentID(void)
 {
 	return s_thread_data == 0 ? std::this_thread::get_id() : s_thread_data->tid;
 }
 
 //-------------------------------------------------------------------------------------
-thread_id_t thread_get_id(thread_t t)
+thread_id_t threadGetID(thread_t t)
 {
 	thread_data_s* data = (thread_data_s*)t;
 	return data->tid;
@@ -96,8 +96,8 @@ thread_id_t thread_get_id(thread_t t)
 void _thread_entry(thread_data_s* data)
 {
 	s_thread_data = data;
-	signal_wait(data->resume_signal);
-	signal_destroy(data->resume_signal);
+	signalWait(data->resume_signal);
+	signalDestroy(data->resume_signal);
 	data->resume_signal = 0;
 	
 	//set random seed
@@ -120,7 +120,7 @@ thread_t _thread_create(thread_function func, void* param, const char* name, boo
 	data->entry_func = func;
 	data->detached = detached;
 	data->name = name?name:"";
-	data->resume_signal = signal_create();
+	data->resume_signal = signalCreate();
 	data->thandle = std::thread(_thread_entry, data);
 	data->tid = data->thandle.get_id();
 
@@ -128,30 +128,30 @@ thread_t _thread_create(thread_function func, void* param, const char* name, boo
 	if (data->detached) data->thandle.detach();
 	
 	//resume thread
-	signal_notify(data->resume_signal);
+	signalNotify(data->resume_signal);
 	return data;
 }
 
 //-------------------------------------------------------------------------------------
-thread_t thread_create(thread_function func, void* param, const char* name)
+thread_t threadCreate(thread_function func, void* param, const char* name)
 {
 	return _thread_create(func, param, name, false);
 }
 
 //-------------------------------------------------------------------------------------
-void thread_create_detached(thread_function func, void* param, const char* name)
+void threadCreateDetached(thread_function func, void* param, const char* name)
 {
 	_thread_create(func, param, name, true);
 }
 
 //-------------------------------------------------------------------------------------
-void thread_sleep(int32_t msec)
+void threadSleep(int32_t msec)
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds(msec));
 }
 
 //-------------------------------------------------------------------------------------
-void thread_join(thread_t thread)
+void threadJoin(thread_t thread)
 {
 	thread_data_s* data = (thread_data_s*)thread;
 	data->thandle.join();
@@ -162,19 +162,19 @@ void thread_join(thread_t thread)
 }
 
 //-------------------------------------------------------------------------------------
-const char* thread_get_current_name(void)
+const char* threadGetCurrentName(void)
 {
 	return (s_thread_data == nullptr) ? "<UNNAME>" : s_thread_data->name.c_str();
 }
 
 //-------------------------------------------------------------------------------------
-void thread_yield(void)
+void threadYield(void)
 {
 	std::this_thread::yield();
 }
 
 //-------------------------------------------------------------------------------------
-mutex_t mutex_create(void)
+mutex_t mutexCreate(void)
 {
 #ifdef CY_SYS_WINDOWS
 	LPCRITICAL_SECTION cs = (LPCRITICAL_SECTION)CY_MALLOC(sizeof(CRITICAL_SECTION));
@@ -188,7 +188,7 @@ mutex_t mutex_create(void)
 }
 
 //-------------------------------------------------------------------------------------
-void mutex_destroy(mutex_t m)
+void mutexDestroy(mutex_t m)
 {
 #ifdef CY_SYS_WINDOWS
 	::DeleteCriticalSection(m);
@@ -199,7 +199,7 @@ void mutex_destroy(mutex_t m)
 }
 
 //-------------------------------------------------------------------------------------
-void mutex_lock(mutex_t m)
+void mutexLock(mutex_t m)
 {
 #ifdef CY_SYS_WINDOWS
 	::EnterCriticalSection(m);
@@ -209,7 +209,7 @@ void mutex_lock(mutex_t m)
 }
 
 //-------------------------------------------------------------------------------------
-void mutex_unlock(mutex_t m)
+void mutexUnlock(mutex_t m)
 {
 #ifdef CY_SYS_WINDOWS
 	::LeaveCriticalSection(m);
@@ -229,7 +229,7 @@ struct signal_s
 #endif
 
 //-------------------------------------------------------------------------------------
-signal_t signal_create(void)
+signal_t signalCreate(void)
 {
 #ifdef CY_SYS_WINDOWS
 	return ::CreateEvent(0, FALSE, FALSE, 0);
@@ -243,7 +243,7 @@ signal_t signal_create(void)
 }
 
 //-------------------------------------------------------------------------------------
-void signal_destroy(signal_t s)
+void signalDestroy(signal_t s)
 {
 #ifdef CY_SYS_WINDOWS
 	::CloseHandle(s);
@@ -256,7 +256,7 @@ void signal_destroy(signal_t s)
 }
 
 //-------------------------------------------------------------------------------------
-void signal_wait(signal_t s)
+void signalWait(signal_t s)
 {
 #ifdef CY_SYS_WINDOWS
 	::WaitForSingleObject(s, INFINITE);
@@ -305,7 +305,7 @@ bool _signal_unlock_wait(signal_s* sig, uint32_t ms)
 #endif
 
 //-------------------------------------------------------------------------------------
-bool signal_timewait(signal_t s, uint32_t ms)
+bool signalTimeWait(signal_t s, uint32_t ms)
 {
 #ifdef CY_SYS_WINDOWS
 	return (WAIT_OBJECT_0 == ::WaitForSingleObject(s, ms));
@@ -327,7 +327,7 @@ bool signal_timewait(signal_t s, uint32_t ms)
 }
 
 //-------------------------------------------------------------------------------------
-void signal_notify(signal_t s)
+void signalNotify(signal_t s)
 {
 #ifdef CY_SYS_WINDOWS
 	::SetEvent(s);
@@ -341,7 +341,7 @@ void signal_notify(signal_t s)
 }
 
 //-------------------------------------------------------------------------------------
-int64_t time_now(void)
+int64_t timeNow(void)
 {
 	const int64_t kMicroSecondsPerSecond = 1000ll * 1000ll;
 
@@ -370,7 +370,7 @@ int64_t time_now(void)
 }
 
 //-------------------------------------------------------------------------------------
-void time_now(char* time_dest, size_t max_size, const char* format)
+void timeNow(char* time_dest, size_t max_size, const char* format)
 {
 	time_t local_time = time(0);
 	struct tm tm_now;
@@ -383,7 +383,7 @@ void time_now(char* time_dest, size_t max_size, const char* format)
 }
 
 //-------------------------------------------------------------------------------------
-int32_t get_cpu_counts(void)
+int32_t getCPUCounts(void)
 {
 	const int32_t DEFAULT_CPU_COUNTS = 2;
 

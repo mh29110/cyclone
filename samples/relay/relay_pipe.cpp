@@ -30,8 +30,8 @@ public:
         assert(port2->get_state()==Connection::kConnected);
         
         //set tcp nodelay
-        socket_api::set_nodelay(m_port1->get_socket(), true);
-        socket_api::set_nodelay(m_port2->get_socket(), true);
+        socket_api::setNoDelay(m_port1->get_socket(), true);
+        socket_api::setNoDelay(m_port2->get_socket(), true);
         
         //check cache
         forward1To2();
@@ -138,7 +138,7 @@ private:
         m_conn2 = nullptr;
         m_pipe = nullptr;
         
-		sys_api::thread_create_detached([server](void*) {
+		sys_api::threadCreateDetached([server](void*) {
 			server->stop();
 		}, nullptr, nullptr);
 	}
@@ -160,8 +160,8 @@ public:
 	{
 		m_address1 = address1;
 		m_address2 = address2;
-		thread_t thread = sys_api::thread_create(std::bind(&RelayPipe_DoubleOut::_workThread, this), nullptr, "rp");
-		sys_api::thread_join(thread);
+		thread_t thread = sys_api::threadCreate(std::bind(&RelayPipe_DoubleOut::_workThread, this), nullptr, "rp");
+		sys_api::threadJoin(thread);
 	}
 
 private:
@@ -243,7 +243,7 @@ private:
         m_client1 = nullptr;
         m_client2 = nullptr;
         
-        sys_api::thread_create_detached([this](void*) {
+        sys_api::threadCreateDetached([this](void*) {
             m_looper->push_stop_request();
         }, nullptr, nullptr);
 	}
@@ -370,7 +370,7 @@ private:
         m_connOut = nullptr;
         m_client = nullptr;
         
-        sys_api::thread_create_detached([this](void*){
+        sys_api::threadCreateDetached([this](void*){
             m_server->stop();
         }, nullptr, nullptr);
     }

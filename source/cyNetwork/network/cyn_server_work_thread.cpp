@@ -59,7 +59,7 @@ void ServerWorkThread::send_message(const Packet** message, int32_t counts)
 //-------------------------------------------------------------------------------------
 bool ServerWorkThread::is_in_workthread(void) const
 {
-	return sys_api::thread_get_current_id() == m_work_thread->get_looper()->get_thread_id();
+	return sys_api::threadGetCurrentID() == m_work_thread->get_looper()->get_thread_id();
 }
 
 //-------------------------------------------------------------------------------------

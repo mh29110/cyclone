@@ -18,7 +18,7 @@ TEST(Pipe, Basic)
 	char read_buf[readbuf_len] = { 0 };
 
 	ssize_t read_size = pipe.read(read_buf, readbuf_len);
-	EXPECT_TRUE(socket_api::is_lasterror_WOULDBLOCK());
+	EXPECT_TRUE(socket_api::isLastErrorWOULDBLOCK());
 	EXPECT_EQ(SOCKET_ERROR, read_size);
 
 	ssize_t write_size = pipe.write(plain_text, text_len);
@@ -29,7 +29,7 @@ TEST(Pipe, Basic)
 	EXPECT_STREQ(plain_text, read_buf);
 
 	read_size = pipe.read(read_buf, readbuf_len);
-	EXPECT_TRUE(socket_api::is_lasterror_WOULDBLOCK());
+	EXPECT_TRUE(socket_api::isLastErrorWOULDBLOCK());
 	EXPECT_EQ(SOCKET_ERROR, read_size);
 }
 
@@ -58,7 +58,7 @@ TEST(Pipe, Overflow)
 
 		ssize_t write_size = pipe.write(snd_block, snd_block_size);
 		if (write_size <= 0) {
-			EXPECT_TRUE(socket_api::is_lasterror_WOULDBLOCK());
+			EXPECT_TRUE(socket_api::isLastErrorWOULDBLOCK());
 			break;
 		}
 		total_snd_size += (size_t)write_size;
@@ -69,7 +69,7 @@ TEST(Pipe, Overflow)
 		uint64_t read_data;
 		ssize_t read_size = pipe.read((char*)&read_data, sizeof(read_data));
 		if (read_size <= 0) {
-			EXPECT_TRUE(socket_api::is_lasterror_WOULDBLOCK());
+			EXPECT_TRUE(socket_api::isLastErrorWOULDBLOCK());
 			break;
 		}
 		total_rcv_size += (size_t)read_size;
@@ -97,17 +97,17 @@ void _push_function(void* param)
 	size_t total_snd_size = 0;
 
 	for (;;) {
-		while (sndBuf.get_free_size() >= sizeof(uint64_t) && total_snd_size<(data->total_size)) {
+		while (sndBuf.getFreeSize() >= sizeof(uint64_t) && total_snd_size<(data->total_size)) {
 			uint64_t next_snd = rnd.next();
-			sndBuf.memcpy_into(&next_snd, sizeof(next_snd));
+			sndBuf.memcpyInto(&next_snd, sizeof(next_snd));
 			total_snd_size += sizeof(next_snd);
 		}
 
 		if (sndBuf.empty()) break;
 
-		ssize_t write_size = sndBuf.write_socket(data->pipe.get_write_port());
+		ssize_t write_size = sndBuf.writeSocket(data->pipe.get_write_port());
 		if (write_size <= 0) {
-			sys_api::thread_yield();
+			sys_api::threadYield();
 			continue;
 		}
 	}
@@ -125,21 +125,21 @@ void _pop_function(void* param)
 	uint64_t read_data;
 
 	while (total_rcv_size<(data->total_size)) {
-		ssize_t read_size = rcvBuf.read_socket(data->pipe.get_read_port(), false);
+		ssize_t read_size = rcvBuf.readSocket(data->pipe.get_read_port(), false);
 		while (rcvBuf.size() >= sizeof(uint64_t)) {
-			EXPECT_EQ(sizeof(uint64_t), rcvBuf.memcpy_out(&read_data, sizeof(uint64_t)));
+			EXPECT_EQ(sizeof(uint64_t), rcvBuf.memcpyOut(&read_data, sizeof(uint64_t)));
 			EXPECT_EQ(rnd.next(), read_data);
 			total_rcv_size += sizeof(uint64_t);
 		}
 
 		if (read_size <= 0) {
-			sys_api::thread_yield();
+			sys_api::threadYield();
 		}
 	}
 	EXPECT_TRUE(rcvBuf.empty());
 	EXPECT_EQ(total_rcv_size, data->total_size);
 	EXPECT_EQ(SOCKET_ERROR, (data->pipe).read((char*)&read_data, sizeof(read_data)));
-	EXPECT_TRUE(socket_api::is_lasterror_WOULDBLOCK());
+	EXPECT_TRUE(socket_api::isLastErrorWOULDBLOCK());
 	EXPECT_EQ(RingBuf::kDefaultCapacity, rcvBuf.capacity());
 }
 
@@ -150,12 +150,12 @@ TEST(Pipe, MultiThread)
 	data.rnd.make();
 	data.total_size = 1024 * 1024*10; //1MB
 
-	thread_t pop_thread = sys_api::thread_create(_pop_function, &data, "pop");
-	thread_t push_thread = sys_api::thread_create(_push_function, &data, "push");
+	thread_t pop_thread = sys_api::threadCreate(_pop_function, &data, "pop");
+	thread_t push_thread = sys_api::threadCreate(_push_function, &data, "push");
 
 	//join
-	sys_api::thread_join(pop_thread);
-	sys_api::thread_join(push_thread);
+	sys_api::threadJoin(pop_thread);
+	sys_api::threadJoin(push_thread);
 }
 
 }

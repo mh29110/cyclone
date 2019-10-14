@@ -32,9 +32,9 @@ static void _timerFunction(Looper::event_id_t id, void* param)
 
 	data->counts++;
 
-	if (sys_api::signal_timewait(data->break_signal, 0) || 
+	if (sys_api::signalTimeWait(data->break_signal, 0) || 
 		((data->break_counts > 0) && (data->counts) >= (data->break_counts))) {
-		sys_api::signal_notify(data->end_signal);
+		sys_api::signalNotify(data->end_signal);
 		//push loop quit command
 		data->looper->push_stop_request();
 		return;
@@ -53,7 +53,7 @@ static void _threadFunction(void* param)
 	data->looper = looper;
 
 	data->timer_id = looper->register_timer_event(data->freq, param, _timerFunction);
-	sys_api::signal_notify(data->begin_signal);
+	sys_api::signalNotify(data->begin_signal);
 
 	looper->loop();
 
@@ -100,14 +100,14 @@ static void _multiTimerThreadFunction(void* param)
 		MultiTimerData& timer_data = data->timers[i];
 		timer_data.id = looper->register_timer_event(timer_data.freq, &(timer_data), _multiTimerFunction);
 	}
-	sys_api::signal_notify(data->begin_signal);
+	sys_api::signalNotify(data->begin_signal);
 
 	for (;;) {
 		looper->step();
 
 		if (looper->is_quit_pending()) break;
-		if (sys_api::signal_timewait(data->pause_signal, 0)) {
-			sys_api::signal_wait(data->resume_signal);
+		if (sys_api::signalTimeWait(data->pause_signal, 0)) {
+			sys_api::signalWait(data->resume_signal);
 		}
 	}
 
@@ -119,9 +119,9 @@ static void _multiTimerThreadFunction(void* param)
 TEST(EventLooper, Timer)
 {
 	ThreadData data;
-	data.begin_signal = sys_api::signal_create();
-	data.end_signal = sys_api::signal_create();
-	data.break_signal = sys_api::signal_create();
+	data.begin_signal = sys_api::signalCreate();
+	data.end_signal = sys_api::signalCreate();
+	data.break_signal = sys_api::signalCreate();
 
 	//timer once
 	{
@@ -130,18 +130,18 @@ TEST(EventLooper, Timer)
 		data.pause_counts = -1;
 		data.freq = 500;
 
-		thread_t thread = sys_api::thread_create(_threadFunction, &data, "timer");
+		thread_t thread = sys_api::threadCreate(_threadFunction, &data, "timer");
 
-		sys_api::signal_wait(data.begin_signal);
-		int64_t begin_time = sys_api::time_now();
+		sys_api::signalWait(data.begin_signal);
+		int64_t begin_time = sys_api::timeNow();
 
-		sys_api::signal_wait(data.end_signal);
-		int64_t end_time = sys_api::time_now();
+		sys_api::signalWait(data.end_signal);
+		int64_t end_time = sys_api::timeNow();
 
 		EXPECT_EQ(1, data.counts.load());
 		EXPECT_GE(end_time - begin_time, (data.freq - MAX_TIMER_ERROR) * 1000ll);
 		EXPECT_LE(end_time - begin_time, (data.freq + MAX_TIMER_ERROR) * 1000ll);
-		sys_api::thread_join(thread);
+		sys_api::threadJoin(thread);
 	}
 
 	//timer more than once
@@ -153,20 +153,20 @@ TEST(EventLooper, Timer)
 
 		const int repeat_times = 7;
 
-		thread_t thread = sys_api::thread_create(_threadFunction, &data, "timer");
+		thread_t thread = sys_api::threadCreate(_threadFunction, &data, "timer");
 
-		sys_api::signal_wait(data.begin_signal);
-		int64_t begin_time = sys_api::time_now();
+		sys_api::signalWait(data.begin_signal);
+		int64_t begin_time = sys_api::timeNow();
 
 		uint32_t sleep_time = data.freq * repeat_times + MAX_TIMER_ERROR;
-		sys_api::thread_sleep((int32_t)sleep_time);
+		sys_api::threadSleep((int32_t)sleep_time);
 		int32_t current_index = data.counts.load();
 
-		sys_api::signal_notify(data.break_signal);
+		sys_api::signalNotify(data.break_signal);
 		EXPECT_GE(current_index, repeat_times);
 		EXPECT_LE(current_index, repeat_times+1);
-		sys_api::thread_join(thread);
-		int64_t end_time = sys_api::time_now();
+		sys_api::threadJoin(thread);
+		int64_t end_time = sys_api::timeNow();
 		EXPECT_GE(end_time - begin_time, sleep_time * 1000ll);
 		EXPECT_LE(end_time - begin_time, (int64_t)(sleep_time + data.freq + MAX_TIMER_ERROR) * 1000ll);
 	}
@@ -178,40 +178,40 @@ TEST(EventLooper, Timer)
 		data.pause_counts = 5;
 		data.freq = 83;
 
-		thread_t thread = sys_api::thread_create(_threadFunction, &data, "timer");
+		thread_t thread = sys_api::threadCreate(_threadFunction, &data, "timer");
 
-		sys_api::signal_wait(data.begin_signal);
+		sys_api::signalWait(data.begin_signal);
 
 		uint32_t sleep_time = data.freq * ((uint32_t)data.pause_counts+2) + MAX_TIMER_ERROR;
-		sys_api::thread_sleep((int32_t)sleep_time);
+		sys_api::threadSleep((int32_t)sleep_time);
 		EXPECT_EQ(data.counts.load(), data.pause_counts);
 
-		sys_api::thread_sleep(MAX_TIMER_ERROR);
+		sys_api::threadSleep(MAX_TIMER_ERROR);
 		EXPECT_EQ(data.counts.load(), data.pause_counts);
 
 		//resume
 		data.pause_counts = data.pause_counts*2;
 		data.looper->enable_read(data.timer_id);
-		sys_api::thread_sleep((int32_t)sleep_time);
+		sys_api::threadSleep((int32_t)sleep_time);
 		EXPECT_EQ(data.counts.load(), data.pause_counts);
 
 		//stop thread
 		data.looper->push_stop_request();
-		sys_api::thread_join(thread);
+		sys_api::threadJoin(thread);
 	}
 
-	sys_api::signal_destroy(data.begin_signal);
-	sys_api::signal_destroy(data.end_signal);
-	sys_api::signal_destroy(data.break_signal);
+	sys_api::signalDestroy(data.begin_signal);
+	sys_api::signalDestroy(data.end_signal);
+	sys_api::signalDestroy(data.break_signal);
 }
 
 //-------------------------------------------------------------------------------------
 TEST(EventLooper, MultiTimer)
 {
 	MultiTimerThreadData data;
-	data.begin_signal = sys_api::signal_create();
-	data.pause_signal = sys_api::signal_create();
-	data.resume_signal = sys_api::signal_create();
+	data.begin_signal = sys_api::signalCreate();
+	data.pause_signal = sys_api::signalCreate();
+	data.resume_signal = sys_api::signalCreate();
 
 	{
 		data.timers.push_back(MultiTimerData{ 0, 11, 0 });
@@ -222,14 +222,14 @@ TEST(EventLooper, MultiTimer)
 		const size_t disable_timer_index = (size_t)rand()%data.timers.size();
 		uint32_t disabled_timer_counts = 0;
 
-		thread_t thread = sys_api::thread_create(_multiTimerThreadFunction, &data, "timer");
+		thread_t thread = sys_api::threadCreate(_multiTimerThreadFunction, &data, "timer");
 
 		//fly some time
-		sys_api::signal_wait(data.begin_signal);
-		sys_api::thread_sleep(sleep_time);
+		sys_api::signalWait(data.begin_signal);
+		sys_api::threadSleep(sleep_time);
 
 		//pause
-		sys_api::signal_notify(data.pause_signal);
+		sys_api::signalNotify(data.pause_signal);
 
 		//check
 		const size_t default_channel_counts = EventLooper_ForTest::get_DEFAULT_CHANNEL_BUF_COUNTS();
@@ -252,11 +252,11 @@ TEST(EventLooper, MultiTimer)
 		CHECK_CHANNEL_SIZE(default_channel_counts, data.timers.size()-1, default_channel_counts - data.timers.size());
 
 		//resume and fly continue
-		sys_api::signal_notify(data.resume_signal);
-		sys_api::thread_sleep(sleep_time);
+		sys_api::signalNotify(data.resume_signal);
+		sys_api::threadSleep(sleep_time);
 
 		//pause and check
-		sys_api::signal_notify(data.pause_signal);
+		sys_api::signalNotify(data.pause_signal);
 		for (size_t i = 0; i < data.timers.size(); i++) {
 			MultiTimerData& timer = data.timers[i];
 
@@ -270,14 +270,14 @@ TEST(EventLooper, MultiTimer)
 		}
 
 		//stop thread
-		sys_api::signal_notify(data.resume_signal);
+		sys_api::signalNotify(data.resume_signal);
 		data.looper->push_stop_request();
-		sys_api::thread_join(thread);
+		sys_api::threadJoin(thread);
 	}
 
-	sys_api::signal_destroy(data.begin_signal);
-	sys_api::signal_destroy(data.pause_signal);
-	sys_api::signal_destroy(data.resume_signal);
+	sys_api::signalDestroy(data.begin_signal);
+	sys_api::signalDestroy(data.pause_signal);
+	sys_api::signalDestroy(data.resume_signal);
 }
 
 }

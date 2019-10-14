@@ -75,10 +75,10 @@ void Looper_select::_poll(
 	else 
 	{
 		//empty set, cause busy-loop, it should never happen!
-		sys_api::thread_sleep(1);
+		sys_api::threadSleep(1);
 	}
 
-	int err = (ready < -1) ? socket_api::get_lasterror() : 0;
+	int err = (ready < -1) ? socket_api::getLastError() : 0;
 
 	if (err < 0)
 	{

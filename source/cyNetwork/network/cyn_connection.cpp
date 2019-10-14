@@ -24,14 +24,14 @@ Connection::Connection(int32_t id, socket_t sfd, Looper* looper, void* param)
 	, m_debuger(nullptr)
 {
 	//set socket to non-block and close-onexec
-	socket_api::set_nonblock(sfd, true);
-	socket_api::set_close_onexec(sfd, true);
+	socket_api::setNonBlock(sfd, true);
+	socket_api::setCloseOnExec(sfd, true);
 	//set other socket option
-	socket_api::set_keep_alive(sfd, true);
-	socket_api::set_linger(sfd, false, 0);
+	socket_api::setKeepAlive(sfd, true);
+	socket_api::setLinger(sfd, false, 0);
 
 	//init write buf lock
-	m_writeBufLock = sys_api::mutex_create();
+	m_writeBufLock = sys_api::mutexCreate();
 
 	m_local_addr = Address(false, m_socket); //create local address
 	m_peer_addr = Address(true, m_socket); //create peer address
@@ -72,7 +72,7 @@ void Connection::send(const char* buf, size_t len)
 {
 	if (buf == nullptr || len == 0) return;
 
-	if (sys_api::thread_get_current_id() == m_looper->get_thread_id())
+	if (sys_api::threadGetCurrentID() == m_looper->get_thread_id())
 	{
 		_send(buf, len);
 	}
@@ -89,7 +89,7 @@ void Connection::send(const char* buf, size_t len)
 		sys_api::auto_mutex lock(m_writeBufLock);
 
 		//write to write buffer
-		m_writeBuf.memcpy_into(buf, len);
+		m_writeBuf.memcpyInto(buf, len);
 
 		//enable write event, wait socket ready
 		m_looper->enable_write(m_event_id);
@@ -107,7 +107,7 @@ bool Connection::_is_writeBuf_empty(void) const
 //-------------------------------------------------------------------------------------
 void Connection::_send(const char* buf, size_t len)
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 
 	bool faultError = false;
 	size_t remaining = len;
@@ -131,9 +131,9 @@ void Connection::_send(const char* buf, size_t len)
 		else
 		{
 			nwrote = 0;
-			int err = socket_api::get_lasterror();
+			int err = socket_api::getLastError();
 
-			if(!socket_api::is_lasterror_WOULDBLOCK())
+			if(!socket_api::isLastErrorWOULDBLOCK())
 			{
 				CY_LOG(L_ERROR, "socket send error, err=%d", err);
 
@@ -154,7 +154,7 @@ void Connection::_send(const char* buf, size_t len)
 		sys_api::auto_mutex lock(m_writeBufLock);
 
 		//write to write buffer
-		m_writeBuf.memcpy_into(buf + nwrote, remaining);
+		m_writeBuf.memcpyInto(buf + nwrote, remaining);
 
 		//enable write event, wait socket ready
 		m_looper->enable_write(m_event_id);
@@ -170,7 +170,7 @@ void Connection::_send(const char* buf, size_t len)
 //-------------------------------------------------------------------------------------
 void Connection::shutdown(void)
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 	assert(m_state == kConnected || m_state==kDisconnecting);
 
 	//set the state to disconnecting...
@@ -187,9 +187,9 @@ void Connection::shutdown(void)
 //-------------------------------------------------------------------------------------
 void Connection::_on_socket_read(void)
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 
-	ssize_t len = m_readBuf.read_socket(m_socket);
+	ssize_t len = m_readBuf.readSocket(m_socket);
 
 	if (len > 0)
 	{
@@ -213,7 +213,7 @@ void Connection::_on_socket_read(void)
 //-------------------------------------------------------------------------------------
 void Connection::_on_socket_write(void)
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 	assert(m_state == kConnected || m_state == kDisconnecting);
 	
 	if (m_looper->is_write(m_event_id))
@@ -225,7 +225,7 @@ void Connection::_on_socket_write(void)
 			m_max_sendbuf_len = m_writeBuf.size();
 		}
 
-		ssize_t len = m_writeBuf.write_socket(m_socket);
+		ssize_t len = m_writeBuf.writeSocket(m_socket);
 		if (len > 0) {
 			if (m_writeBuf.empty()) {
 				m_looper->disable_write(m_event_id);
@@ -239,7 +239,7 @@ void Connection::_on_socket_write(void)
 		else
 		{
 			//log error
-			CY_LOG(L_ERROR, "write socket error, err=%d", socket_api::get_lasterror());
+			CY_LOG(L_ERROR, "write socket error, err=%d", socket_api::getLastError());
 		}
 	}
 }
@@ -247,7 +247,7 @@ void Connection::_on_socket_write(void)
 //-------------------------------------------------------------------------------------
 void Connection::_on_socket_close(void)
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 	assert(m_state == kConnected || m_state == kDisconnecting);
 
 	ConnectionPtr thisPtr = shared_from_this();
@@ -270,11 +270,11 @@ void Connection::_on_socket_close(void)
 	m_readBuf.reset();
 
 	//close socket
-	socket_api::close_socket(m_socket);
+	socket_api::closeSocket(m_socket);
 	m_socket = INVALID_SOCKET;
 
 	//destroy write buf lock
-	sys_api::mutex_destroy(m_writeBufLock);
+	sys_api::mutexDestroy(m_writeBufLock);
 	m_writeBufLock = nullptr;
 }
 
@@ -287,7 +287,7 @@ void Connection::_on_socket_error(void)
 //-------------------------------------------------------------------------------------
 void Connection::set_name(const char* name)
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 
 	m_name = name;
 }

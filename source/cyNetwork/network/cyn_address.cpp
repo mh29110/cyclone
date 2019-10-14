@@ -48,9 +48,9 @@ Address::Address(const Address& other)
 Address::Address(bool peer, socket_t sfd)
 {
 	if (peer)
-		socket_api::getpeername(sfd, m_address);
+		socket_api::getPeerName(sfd, m_address);
 	else
-		socket_api::getsockname(sfd, m_address);
+		socket_api::getSockName(sfd, m_address);
 	socket_api::inet_ntop(m_address.sin_addr, m_ip_string, IP_ADDRESS_LEN);
 }
 

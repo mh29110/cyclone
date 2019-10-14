@@ -37,7 +37,7 @@ void onPeerMessage(TcpServer* server, int32_t thread_index, ConnectionPtr conn)
 	RingBuf& buf = conn->get_input_buf();
 
 	char temp[MAX_ECHO_LENGTH + 1] = { 0 };
-	buf.memcpy_out(temp, MAX_ECHO_LENGTH);
+	buf.memcpyOut(temp, MAX_ECHO_LENGTH);
 
 	CY_LOG(L_INFO, "[T=%d]receive:%s", thread_index, temp);
 
@@ -47,7 +47,7 @@ void onPeerMessage(TcpServer* server, int32_t thread_index, ConnectionPtr conn)
 	}
 
 	if (strcmp(temp, "shutdown") == 0) {
-		sys_api::thread_create_detached([server](void*) {
+		sys_api::threadCreateDetached([server](void*) {
 			server->stop();
 		}, 0, nullptr);
 		return;
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 
 	server.bind(Address(server_port, false), true);
 
-	if (!server.start(sys_api::get_cpu_counts()))
+	if (!server.start(sys_api::getCPUCounts()))
 		return 1;
 
 	server.join();

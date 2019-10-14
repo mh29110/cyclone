@@ -96,7 +96,7 @@ private:
 		m_downState = kWaitHandshaking;
 		m_downConnection = conn;
 
-		socket_api::set_nodelay(conn->get_socket(), true);
+		socket_api::setNoDelay(conn->get_socket(), true);
 	}
 	//-------------------------------------------------------------------------------------
 	void onDownMessage(TcpServer* server, ConnectionPtr conn)
@@ -301,7 +301,7 @@ private:
 
 		if (success) {
 			//set tcp nodelay
-			socket_api::set_nodelay(conn->get_socket(), true);
+			socket_api::setNoDelay(conn->get_socket(), true);
 
 			int32_t id = (int32_t)(intptr_t)(client->get_callback_param());
 			auto it = m_relaySessionMap.find(id);
@@ -366,7 +366,7 @@ private:
 			Packet packet;
 			packet.build(RELAY_PACKET_HEADSIZE, RelayForwardMsg::ID, (uint16_t)(sizeof(RelayForwardMsg) + buf_round_size), nullptr);
 			memcpy(packet.get_packet_content(), &msg, sizeof(RelayForwardMsg));
-			ringBuf.memcpy_out(packet.get_packet_content() + sizeof(RelayForwardMsg), msgSize);
+			ringBuf.memcpyOut(packet.get_packet_content() + sizeof(RelayForwardMsg), msgSize);
 
 			//encrypt and send to down client
 			uint8_t* buf = (uint8_t*)packet.get_packet_content() + sizeof(RelayForwardMsg);

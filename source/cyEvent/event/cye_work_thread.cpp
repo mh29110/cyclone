@@ -36,11 +36,11 @@ void WorkThread::start(const char* name)
 
 	//run the work thread
 	m_name = name ? name : "worker";
-	m_thread = sys_api::thread_create(
+	m_thread = sys_api::threadCreate(
 		std::bind(&WorkThread::_work_thread, this, std::placeholders::_1), &param, m_name.c_str());
 
 	//wait work thread ready signal
-	while (param._ready == 0) sys_api::thread_yield();	//BUSY LOOP!
+	while (param._ready == 0) sys_api::threadYield();	//BUSY LOOP!
 }
 
 //-------------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ void WorkThread::_work_thread(void* param)
 //-------------------------------------------------------------------------------------
 void WorkThread::_on_message(void)
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 	for (;;) {
 		int32_t counts;
 		if (m_pipe.read((char*)&counts, sizeof(counts)) <= 0) break;
@@ -135,7 +135,7 @@ void WorkThread::send_message(const Packet** message, int32_t counts)
 void WorkThread::join(void)
 {
 	if (m_thread != nullptr) {
-		sys_api::thread_join(m_thread);
+		sys_api::threadJoin(m_thread);
 		m_thread = nullptr;
 	}
 }

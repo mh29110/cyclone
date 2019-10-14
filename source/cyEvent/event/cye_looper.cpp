@@ -22,18 +22,18 @@ Looper::Looper()
 	: m_free_head(INVALID_EVENT_ID)
 	, m_active_channel_counts(0)
 	, m_loop_counts(0)
-	, m_current_thread(sys_api::thread_get_current_id())
+	, m_current_thread(sys_api::threadGetCurrentID())
 	, m_inner_pipe(0)
 	, m_inner_pipe_touched(0)
 	, m_quit_cmd(0)
 {
-	m_lock = sys_api::mutex_create();
+	m_lock = sys_api::mutexCreate();
 }
 
 //-------------------------------------------------------------------------------------
 Looper::~Looper()
 {
-	sys_api::mutex_destroy(m_lock);
+	sys_api::mutexDestroy(m_lock);
 }
 
 //-------------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ Looper::event_id_t Looper::register_event(socket_t sockfd,
 	event_callback _on_read,
 	event_callback _on_write)
 {
-	assert(sys_api::thread_get_current_id() == m_current_thread);
+	assert(sys_api::threadGetCurrentID() == m_current_thread);
 	sys_api::auto_mutex lock(m_lock);
 
 	//get a new channel slot
@@ -73,7 +73,7 @@ Looper::event_id_t Looper::register_timer_event(uint32_t milliSeconds,
 	void* param,
 	timer_callback _on_timer)
 {
-	assert(sys_api::thread_get_current_id() == m_current_thread);
+	assert(sys_api::threadGetCurrentID() == m_current_thread);
 	sys_api::auto_mutex lock(m_lock);
 
 	//get a new channel slot
@@ -137,7 +137,7 @@ Looper::event_id_t Looper::register_timer_event(uint32_t milliSeconds,
 //-------------------------------------------------------------------------------------
 void Looper::delete_event(event_id_t id)
 {
-	assert(sys_api::thread_get_current_id() == m_current_thread);
+	assert(sys_api::threadGetCurrentID() == m_current_thread);
 	if (id == INVALID_EVENT_ID) return;
 	sys_api::auto_mutex lock(m_lock);
 	assert((size_t)id < m_channelBuffer.size());
@@ -152,7 +152,7 @@ void Looper::delete_event(event_id_t id)
 #ifdef CY_SYS_WINDOWS
 		::DeleteTimerQueueTimer(0, timer->htimer, INVALID_HANDLE_VALUE);
 #elif defined(CY_HAVE_TIMERFD)
-		socket_api::close_socket(channel.fd);
+		socket_api::closeSocket(channel.fd);
 #endif
 		delete timer;
 	}
@@ -246,7 +246,7 @@ void Looper::disable_all(event_id_t id)
 //-------------------------------------------------------------------------------------
 void Looper::loop(void)
 {
-	assert(sys_api::thread_get_current_id() == m_current_thread);
+	assert(sys_api::threadGetCurrentID() == m_current_thread);
 
 	//is quit request pushed before loop begin
 	if (is_quit_pending()) return;
@@ -305,7 +305,7 @@ void Looper::loop(void)
 //-------------------------------------------------------------------------------------
 void Looper::step(void)
 {
-	assert(sys_api::thread_get_current_id() == m_current_thread);
+	assert(sys_api::threadGetCurrentID() == m_current_thread);
 	assert(m_inner_pipe==0);
 	if (is_quit_pending()) return;
 

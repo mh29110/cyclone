@@ -40,7 +40,7 @@ static const _auto_init_win_socke_s& AUTO_INIT_WIN_SOCKET()
 #endif
 
 //-------------------------------------------------------------------------------------
-void global_init(void)
+void globalInit(void)
 {
 #ifdef CY_SYS_WINDOWS
 	AUTO_INIT_WIN_SOCKET();
@@ -48,7 +48,7 @@ void global_init(void)
 }
 
 //-------------------------------------------------------------------------------------
-socket_t create_socket(void)
+socket_t createSocket(void)
 {
 #ifdef CY_SYS_WINDOWS
 	AUTO_INIT_WIN_SOCKET();
@@ -57,14 +57,14 @@ socket_t create_socket(void)
 	socket_t sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == INVALID_SOCKET)
 	{
-		CY_LOG(L_FATAL, "socket_api::create_socket, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::createSocket, err=%d", getLastError());
 	}
 
 	return sockfd;
 }
 
 //-------------------------------------------------------------------------------------
-void close_socket(socket_t s)
+void closeSocket(socket_t s)
 {
 #ifdef CY_SYS_WINDOWS
 	if (SOCKET_ERROR == ::closesocket(s))
@@ -72,12 +72,12 @@ void close_socket(socket_t s)
 	if (SOCKET_ERROR == ::close(s))
 #endif
 	{
-		CY_LOG(L_ERROR, "socket_api::close_socket, err=%d", get_lasterror());
+		CY_LOG(L_ERROR, "socket_api::closeSocket, err=%d", getLastError());
 	}
 }
 
 //-------------------------------------------------------------------------------------
-bool set_nonblock(socket_t s, bool enable)
+bool setNonBlock(socket_t s, bool enable)
 {
 #ifdef CY_SYS_WINDOWS
 	//set socket to nonblock
@@ -89,7 +89,7 @@ bool set_nonblock(socket_t s, bool enable)
 		SOCKET_ERROR == ::fcntl(s, F_SETFL, enable ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK)))
 #endif
 	{
-		CY_LOG(L_FATAL, "socket_api::set_nonblock, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::setNonBlock, err=%d", getLastError());
 		return false;
 	}
 
@@ -97,7 +97,7 @@ bool set_nonblock(socket_t s, bool enable)
 }
 
 //-------------------------------------------------------------------------------------
-bool set_close_onexec(socket_t s, bool enable)
+bool setCloseOnExec(socket_t s, bool enable)
 {
 #ifdef CY_SYS_WINDOWS
 	(void)s;
@@ -109,7 +109,7 @@ bool set_close_onexec(socket_t s, bool enable)
 	if (SOCKET_ERROR == flags ||
 		SOCKET_ERROR == ::fcntl(s, F_SETFD, enable ? (flags | FD_CLOEXEC) : (flags & ~FD_CLOEXEC)))
 	{
-		CY_LOG(L_FATAL, "socket_api::set_close_onexec, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::setCloseOnExec, err=%d", getLastError());
 		return false;
 	}
 #endif
@@ -121,7 +121,7 @@ bool bind(socket_t s, const struct sockaddr_in& addr)
 {
 	if (SOCKET_ERROR == ::bind(s, (const sockaddr*)(&addr), static_cast<socklen_t>(sizeof addr)))
 	{
-		CY_LOG(L_FATAL, "socket_api::bind, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::bind, err=%d", getLastError());
 		return false;
 	}
 	return true;
@@ -132,7 +132,7 @@ bool listen(socket_t s)
 {
 	if(SOCKET_ERROR == ::listen(s, SOMAXCONN))
 	{
-		CY_LOG(L_FATAL, "socket_api::listen, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::listen, err=%d", getLastError());
 		return false;
 	}
 	return true;
@@ -143,7 +143,7 @@ bool connect(socket_t s, const struct sockaddr_in& addr)
 {
 	if (::connect(s, (const sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
 	{
-		int lasterr = get_lasterror();
+		int lasterr = getLastError();
 #ifdef CY_SYS_WINDOWS
 		//non-block socket
 		if(lasterr == WSAEWOULDBLOCK) return true; 
@@ -154,7 +154,7 @@ bool connect(socket_t s, const struct sockaddr_in& addr)
 			lasterr == EISCONN) return true; 
 #endif
 
-		CY_LOG(L_FATAL, "socket_api::connect, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::connect, err=%d", getLastError());
 		return false;
 	}
 	return true;
@@ -170,7 +170,7 @@ bool inet_pton(const char* ip, struct in_addr& a)
 	if (::inet_pton(AF_INET, ip, &a) != 1)
 #endif
 	{
-		CY_LOG(L_FATAL, "socket_api::inet_pton, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::inet_pton, err=%d", getLastError());
 		return false;
 	}
 	return true;
@@ -188,7 +188,7 @@ bool inet_ntop(const struct in_addr& a, char *dst, socklen_t size)
 	if (::inet_ntop(AF_INET, &a, dst, size) == 0)
 #endif
 	{
-		CY_LOG(L_FATAL, "socket_api::inet_ntop, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::inet_ntop, err=%d", getLastError());
 		return false;
 	}
 	return true;
@@ -226,32 +226,32 @@ bool shutdown(socket_t s)
 	if (SOCKET_ERROR == ::shutdown(s, SHUT_RDWR))
 #endif
 	{
-		CY_LOG(L_FATAL, "socket_api::shutdown, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::shutdown, err=%d", getLastError());
 		return false;
 	}
 	return true;
 }
 
 //-------------------------------------------------------------------------------------
-bool setsockopt(socket_t s, int level, int optname, const void *optval, size_t optlen)
+bool setSockOpt(socket_t s, int level, int optname, const void *optval, size_t optlen)
 {
 	if (SOCKET_ERROR == ::setsockopt(s, level, optname, (const char*)optval, (socklen_t)optlen))
 	{
-		CY_LOG(L_ERROR, "socket_api::setsockopt, level=%d, optname=%d, err=%d", get_lasterror());
+		CY_LOG(L_ERROR, "socket_api::setSockOpt, level=%d, optname=%d, err=%d", getLastError());
 		return false;
 	}
 	return true;
 }
 
 //-------------------------------------------------------------------------------------
-bool set_reuse_addr(socket_t s, bool on)
+bool setReuseAddr(socket_t s, bool on)
 {
 	int optval = on ? 1 : 0;
-	return setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &optval, static_cast<socklen_t>(sizeof optval));
+	return setSockOpt(s, SOL_SOCKET, SO_REUSEADDR, &optval, static_cast<socklen_t>(sizeof optval));
 }
 
 //-------------------------------------------------------------------------------------
-bool set_reuse_port(socket_t s, bool on)
+bool setReusePort(socket_t s, bool on)
 {
 #ifndef SO_REUSEPORT
 	(void)s;
@@ -261,37 +261,37 @@ bool set_reuse_port(socket_t s, bool on)
 	return false;
 #else
 	int optval = on ? 1 : 0;
-	return setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &optval, static_cast<socklen_t>(sizeof optval));
+	return setSockOpt(s, SOL_SOCKET, SO_REUSEPORT, &optval, static_cast<socklen_t>(sizeof optval));
 #endif
 }
 
 //-------------------------------------------------------------------------------------
-bool set_keep_alive(socket_t s, bool on)
+bool setKeepAlive(socket_t s, bool on)
 {
 	int optval = on ? 1 : 0;
-	return setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &optval, static_cast<socklen_t>(sizeof optval));
+	return setSockOpt(s, SOL_SOCKET, SO_KEEPALIVE, &optval, static_cast<socklen_t>(sizeof optval));
 }
 
 //-------------------------------------------------------------------------------------
-bool set_nodelay(socket_t s, bool on)
+bool setNoDelay(socket_t s, bool on)
 {
 	int optval = on ? 1 : 0;
-	return setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &optval, static_cast<socklen_t>(sizeof optval));
+	return setSockOpt(s, IPPROTO_TCP, TCP_NODELAY, &optval, static_cast<socklen_t>(sizeof optval));
 }
 
 //-------------------------------------------------------------------------------------
-bool set_linger(socket_t s, bool on, uint16_t linger_time)
+bool setLinger(socket_t s, bool on, uint16_t linger_time)
 {
 	struct linger linger_;
 
 	linger_.l_onoff = on; // && (linger_time > 0)) ? 1 : 0;
 	linger_.l_linger = on ? linger_time : 0;
 
-	return setsockopt(s, SOL_SOCKET, SO_LINGER, &linger_, sizeof(linger_));
+	return setSockOpt(s, SOL_SOCKET, SO_LINGER, &linger_, sizeof(linger_));
 }
 
 //-------------------------------------------------------------------------------------
-int get_socket_error(socket_t sockfd)
+int getSocketError(socket_t sockfd)
 {
 	int optval;
 	socklen_t optlen = sizeof(optval);
@@ -314,43 +314,43 @@ socket_t accept(socket_t s, struct sockaddr_in* addr)
 
 	if (connfd == INVALID_SOCKET)
 	{
-		CY_LOG(L_FATAL, "socket_api::accept, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::accept, err=%d", getLastError());
 	}
 	return connfd;
 }
 
 //-------------------------------------------------------------------------------------
-bool getsockname(socket_t s, struct sockaddr_in& addr)
+bool getSockName(socket_t s, struct sockaddr_in& addr)
 {
 	socklen_t addrlen = static_cast<socklen_t>(sizeof addr);
 	memset(&addr, 0, sizeof addr);
 
 	if (SOCKET_ERROR == ::getsockname(s, (struct sockaddr*)(&addr), &addrlen))
 	{
-		CY_LOG(L_FATAL, "socket_api::getsockname, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::getSockName, err=%d", getLastError());
 		return false;
 	}
 	return true;
 }
 
 //-------------------------------------------------------------------------------------
-bool getpeername(socket_t s, struct sockaddr_in& addr)
+bool getPeerName(socket_t s, struct sockaddr_in& addr)
 {
 	socklen_t addrlen = static_cast<socklen_t>(sizeof addr);
 	memset(&addr, 0, sizeof addr);
 
 	if (SOCKET_ERROR == ::getpeername(s, (struct sockaddr*)(&addr), &addrlen) )
 	{
-		CY_LOG(L_FATAL, "socket_api::getpeername, err=%d", get_lasterror());
+		CY_LOG(L_FATAL, "socket_api::getPeerName, err=%d", getLastError());
 		return false;
 	}
 	return true;
 }
 
 //-------------------------------------------------------------------------------------
-bool resolve_hostname(const char* hostname, struct sockaddr_in& addr)
+bool resolveHostName(const char* hostname, struct sockaddr_in& addr)
 {
-	socket_api::global_init();
+	socket_api::globalInit();
 
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
@@ -360,7 +360,7 @@ bool resolve_hostname(const char* hostname, struct sockaddr_in& addr)
 
 	struct addrinfo *result = nullptr;
 	if (getaddrinfo(hostname, nullptr, &hints, &result) != 0) {
-		CY_LOG(L_ERROR, "socket_api::resolve %s failed, errno=%d", hostname, socket_api::get_lasterror());
+		CY_LOG(L_ERROR, "socket_api::resolve %s failed, errno=%d", hostname, socket_api::getLastError());
 		return false;
 	}
 
@@ -403,7 +403,7 @@ uint32_t ntoh_32(uint32_t x)
 }
 
 //-------------------------------------------------------------------------------------
-int get_lasterror(void)
+int getLastError(void)
 {
 #ifdef CY_SYS_WINDOWS
 	return ::WSAGetLastError();
@@ -413,11 +413,11 @@ int get_lasterror(void)
 }
 
 //-------------------------------------------------------------------------------------
-bool is_lasterror_WOULDBLOCK(void)
+bool isLastErrorWOULDBLOCK(void)
 {
 	//This error is returned from operations on nonblocking sockets that cannot be completed immediately
 #ifdef CY_SYS_WINDOWS
-	return get_lasterror() == WSAEWOULDBLOCK;
+	return getLastError() == WSAEWOULDBLOCK;
 #else
 	return errno==EWOULDBLOCK;
 #endif

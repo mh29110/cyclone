@@ -30,11 +30,11 @@ public:
 		m_server_port = server_port;
 
 		//start client thread
-		sys_api::thread_create_detached(std::bind(&ChatClient::clientThread, this), 0, "client");
+		sys_api::threadCreateDetached(std::bind(&ChatClient::clientThread, this), 0, "client");
 		CY_LOG(L_DEBUG, "connect to %s:%d...", server_ip.c_str(), server_port);
 
 		//wait connect completed
-		sys_api::signal_wait(m_connected_signal);
+		sys_api::signalWait(m_connected_signal);
 	}
 
 public:
@@ -65,7 +65,7 @@ public:
 
 		if (success){
 			m_client = client;
-			sys_api::signal_notify(m_connected_signal);
+			sys_api::signalNotify(m_connected_signal);
 			return 0;
 		}
 		else
@@ -110,12 +110,12 @@ public:
 	ChatClient()
 		: m_client(nullptr)
 	{
-		m_connected_signal = sys_api::signal_create();
+		m_connected_signal = sys_api::signalCreate();
 	}
 
 	~ChatClient()
 	{
-		sys_api::signal_destroy(m_connected_signal);
+		sys_api::signalDestroy(m_connected_signal);
 	}
 };
 

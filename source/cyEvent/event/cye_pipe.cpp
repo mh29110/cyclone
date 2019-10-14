@@ -18,7 +18,7 @@ bool Pipe::construct_socket_pipe(pipe_port_t handles[2])
 	//
 	handles[0] = handles[1] = INVALID_SOCKET;
 
-	socket_t s = socket_api::create_socket();
+	socket_t s = socket_api::createSocket();
 	if (s == INVALID_SOCKET)
 	{
 		return false;
@@ -35,33 +35,33 @@ bool Pipe::construct_socket_pipe(pipe_port_t handles[2])
 			break;
 		if (!socket_api::listen(s)) 
 			break;
-		if (!socket_api::getsockname(s, serv_addr)) 
+		if (!socket_api::getSockName(s, serv_addr))
 			break;
-		if ((handles[1] = socket_api::create_socket()) == INVALID_SOCKET) 
+		if ((handles[1] = socket_api::createSocket()) == INVALID_SOCKET)
 			break;
-		if (!socket_api::set_nonblock(handles[1], true))
+		if (!socket_api::setNonBlock(handles[1], true))
 			break;
-		if (!socket_api::set_close_onexec(handles[1], true))
+		if (!socket_api::setCloseOnExec(handles[1], true))
 			break;
 		if (!socket_api::connect(handles[1], serv_addr)) 
 			break;
 		if ((handles[0] = socket_api::accept(s, 0)) == INVALID_SOCKET) 
 			break;
-		if (!socket_api::set_nonblock(handles[0], true))
+		if (!socket_api::setNonBlock(handles[0], true))
 			break;
-		if (!socket_api::set_close_onexec(handles[0], true))
+		if (!socket_api::setCloseOnExec(handles[0], true))
 			break;
 
-		socket_api::close_socket(s);
+		socket_api::closeSocket(s);
 		return true;
 	}
 
 //error case
 	if (handles[0] != INVALID_SOCKET)
-		socket_api::close_socket(handles[0]);
+		socket_api::closeSocket(handles[0]);
 	if (handles[1] != INVALID_SOCKET)
-		socket_api::close_socket(handles[1]);
-	socket_api::close_socket(s);
+		socket_api::closeSocket(handles[1]);
+	socket_api::closeSocket(s);
 	handles[0] = handles[1] = INVALID_SOCKET;
 	return false;
 }
@@ -70,12 +70,12 @@ bool Pipe::construct_socket_pipe(pipe_port_t handles[2])
 void Pipe::destroy_socket_pipe(pipe_port_t handles[2])
 {
 	if (handles[0] != INVALID_SOCKET) {
-		socket_api::close_socket(handles[0]);
+		socket_api::closeSocket(handles[0]);
 		handles[0] = INVALID_SOCKET;
 	}
 
 	if (handles[1] != INVALID_SOCKET) {
-		socket_api::close_socket(handles[1]);
+		socket_api::closeSocket(handles[1]);
 		handles[1] = INVALID_SOCKET;
 	}
 }
@@ -90,8 +90,8 @@ Pipe::Pipe()
 	if(::pipe2(m_pipe_fd, O_NONBLOCK|O_CLOEXEC)<0)
 #else
 	if(::pipe(m_pipe_fd)<0 || 
-		!socket_api::set_nonblock(m_pipe_fd[0], true) || !socket_api::set_close_onexec(m_pipe_fd[0], true) ||
-		!socket_api::set_nonblock(m_pipe_fd[1], true) || !socket_api::set_close_onexec(m_pipe_fd[1], true))	
+		!socket_api::setNonBlock(m_pipe_fd[0], true) || !socket_api::setCloseOnExec(m_pipe_fd[0], true) ||
+		!socket_api::setNonBlock(m_pipe_fd[1], true) || !socket_api::setCloseOnExec(m_pipe_fd[1], true))
 #endif
 #endif
 	{

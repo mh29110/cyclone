@@ -75,40 +75,40 @@ public:
 			pushThreadData[i] = new ThreadData();
 			pushThreadData[i]->globalData = this;
 			pushThreadData[i]->workCounts = 0;
-			pushThreadData[i]->complete = sys_api::signal_create();
+			pushThreadData[i]->complete = sys_api::signalCreate();
 			snprintf(pushThreadData[i]->name, 32, "push%02d", i);
 		}
 		for (int32_t i = 0; i < m_popThreads; i++) {
 			popThreadData[i] = new ThreadData();
 			popThreadData[i]->globalData = this;
 			popThreadData[i]->workCounts = 0;
-			popThreadData[i]->complete = sys_api::signal_create();
+			popThreadData[i]->complete = sys_api::signalCreate();
 			snprintf(popThreadData[i]->name, 32, "pop%02d", i);
 		}
 
 		if (m_pushFirst) {
 			for (int32_t i = 0; i < m_pushThreads; i++) {
-				sys_api::thread_create_detached(MultiThreadPushPop::pushFunction, pushThreadData[i], pushThreadData[i]->name);
+				sys_api::threadCreateDetached(MultiThreadPushPop::pushFunction, pushThreadData[i], pushThreadData[i]->name);
 			}
 
 			for (int32_t i = 0; i < m_popThreads; i++) {
-				sys_api::thread_create_detached(MultiThreadPushPop::popFunction, popThreadData[i], popThreadData[i]->name);
+				sys_api::threadCreateDetached(MultiThreadPushPop::popFunction, popThreadData[i], popThreadData[i]->name);
 			}
 		}
 		else {
 			for (int32_t i = 0; i < m_popThreads; i++) {
-				sys_api::thread_create_detached(MultiThreadPushPop::popFunction, popThreadData[i], popThreadData[i]->name);
+				sys_api::threadCreateDetached(MultiThreadPushPop::popFunction, popThreadData[i], popThreadData[i]->name);
 			}
 
 			for (int32_t i = 0; i < m_pushThreads; i++) {
-				sys_api::thread_create_detached(MultiThreadPushPop::pushFunction, pushThreadData[i], pushThreadData[i]->name);
+				sys_api::threadCreateDetached(MultiThreadPushPop::pushFunction, pushThreadData[i], pushThreadData[i]->name);
 			}
 		}
 
 		//wait all push thread
 		double averageCounts = 0.0;
 		for (int32_t i = 0; i < m_pushThreads; i++) {
-			sys_api::signal_wait(pushThreadData[i]->complete);
+			sys_api::signalWait(pushThreadData[i]->complete);
 			averageCounts += (double)pushThreadData[i]->workCounts;
 		}	
 		m_noMoreData = true;
@@ -129,7 +129,7 @@ public:
 		//wait all pop thread
 		averageCounts = 0.0;
 		for (int32_t i = 0; i < m_popThreads; i++) {
-			sys_api::signal_wait(popThreadData[i]->complete);
+			sys_api::signalWait(popThreadData[i]->complete);
 			averageCounts += (double)popThreadData[i]->workCounts;
 		}
 		averageCounts /= m_popThreads;
@@ -182,7 +182,7 @@ private:
 			EXPECT_GE(nextValue, 1u);
 			EXPECT_LE(nextValue, m_topValue);
 			while (!(m_queue->push(nextValue))) {
-				sys_api::thread_yield();
+				sys_api::threadYield();
 			}
 
 			threadData->workCounts++;
@@ -190,7 +190,7 @@ private:
 		}
 
 		//Complete
-		sys_api::signal_notify(threadData->complete);
+		sys_api::signalNotify(threadData->complete);
 	}
 
 	void _popFunction(ThreadData* threadData) {
@@ -208,11 +208,11 @@ private:
 				if (m_noMoreData) break;
 
 				//minor wait when queue is empty
-				sys_api::thread_yield();
+				sys_api::threadYield();
 			}
 		}
 		//Complete
-		sys_api::signal_notify(threadData->complete);
+		sys_api::signalNotify(threadData->complete);
 	}
 
 private:

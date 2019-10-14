@@ -7,37 +7,37 @@ namespace {
 //-------------------------------------------------------------------------------------
 TEST(Signal, Basic)
 {
-	sys_api::signal_t signal = sys_api::signal_create();
+	sys_api::signal_t signal = sys_api::signalCreate();
 
 	//wait
-	EXPECT_FALSE(sys_api::signal_timewait(signal, 0));
-	EXPECT_FALSE(sys_api::signal_timewait(signal, 1));
+	EXPECT_FALSE(sys_api::signalTimeWait(signal, 0));
+	EXPECT_FALSE(sys_api::signalTimeWait(signal, 1));
 
 	//notify, wait and timewait
-	sys_api::signal_notify(signal);
-	sys_api::signal_wait(signal);
-	EXPECT_FALSE(sys_api::signal_timewait(signal, 1));
+	sys_api::signalNotify(signal);
+	sys_api::signalWait(signal);
+	EXPECT_FALSE(sys_api::signalTimeWait(signal, 1));
 
 	//notify and time_wait twice
-	sys_api::signal_notify(signal);
-	EXPECT_TRUE(sys_api::signal_timewait(signal, 1));
-	EXPECT_FALSE(sys_api::signal_timewait(signal, 0));
+	sys_api::signalNotify(signal);
+	EXPECT_TRUE(sys_api::signalTimeWait(signal, 1));
+	EXPECT_FALSE(sys_api::signalTimeWait(signal, 0));
 
 	//notify twice and time_wait twice
-	sys_api::signal_notify(signal);
-	sys_api::signal_notify(signal);
-	EXPECT_TRUE(sys_api::signal_timewait(signal, 0));
-	EXPECT_FALSE(sys_api::signal_timewait(signal, 1));
+	sys_api::signalNotify(signal);
+	sys_api::signalNotify(signal);
+	EXPECT_TRUE(sys_api::signalTimeWait(signal, 0));
+	EXPECT_FALSE(sys_api::signalTimeWait(signal, 1));
 
 	//time_wait
-	int64_t begin_time = sys_api::time_now();
-	EXPECT_FALSE(sys_api::signal_timewait(signal, 100));
-	int64_t end_time = sys_api::time_now();
+	int64_t begin_time = sys_api::timeNow();
+	EXPECT_FALSE(sys_api::signalTimeWait(signal, 100));
+	int64_t end_time = sys_api::timeNow();
 	EXPECT_GE(end_time - begin_time, 100*1000);
 	EXPECT_LE(end_time - begin_time, 110*1000);
 
 
-	sys_api::signal_destroy(signal);
+	sys_api::signalDestroy(signal);
 }
 
 //-------------------------------------------------------------------------------------
@@ -53,9 +53,9 @@ static void _threadFunction(void* param)
 {
 	ThreadData* data = (ThreadData*)param;
 
-	sys_api::signal_wait(data->signal_ping);
+	sys_api::signalWait(data->signal_ping);
 	data->live_counts->fetch_sub(1);
-	sys_api::signal_notify(data->signal_pong);
+	sys_api::signalNotify(data->signal_pong);
 
 	delete data;
 }
@@ -65,8 +65,8 @@ TEST(Signal, Multithread)
 {
 	const int32_t thread_counts = 10;
 
-	sys_api::signal_t signal_ping = sys_api::signal_create();
-	sys_api::signal_t signal_pong = sys_api::signal_create();
+	sys_api::signal_t signal_ping = sys_api::signalCreate();
+	sys_api::signal_t signal_pong = sys_api::signalCreate();
 	atomic_int32_t live_counts(0);
 
 	for (int32_t i = 0; i < thread_counts; i++) {
@@ -75,7 +75,7 @@ TEST(Signal, Multithread)
 		data->signal_pong = signal_pong;
 		data->live_counts = &live_counts;
 
-		sys_api::thread_create_detached(_threadFunction, data, "");
+		sys_api::threadCreateDetached(_threadFunction, data, "");
 
 		live_counts++;
 	}
@@ -84,17 +84,17 @@ TEST(Signal, Multithread)
 
 	while (live_counts>0) {
 		int32_t current_live_counts = live_counts;
-		sys_api::signal_notify(signal_ping);
-		sys_api::signal_wait(signal_pong);
+		sys_api::signalNotify(signal_ping);
+		sys_api::signalWait(signal_pong);
 		EXPECT_EQ(current_live_counts - 1, live_counts.load());
 	}
 
 	EXPECT_EQ(0, live_counts);
-	EXPECT_FALSE(sys_api::signal_timewait(signal_ping, 0));
-	EXPECT_FALSE(sys_api::signal_timewait(signal_pong, 0));
+	EXPECT_FALSE(sys_api::signalTimeWait(signal_ping, 0));
+	EXPECT_FALSE(sys_api::signalTimeWait(signal_pong, 0));
 
-	sys_api::signal_destroy(signal_ping);
-	sys_api::signal_destroy(signal_pong);
+	sys_api::signalDestroy(signal_ping);
+	sys_api::signalDestroy(signal_pong);
 }
 
 }

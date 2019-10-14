@@ -30,11 +30,11 @@ public:
 		m_server_port = server_port;
 
 		//start client thread
-		sys_api::thread_create_detached(std::bind(&EchoClient::clientThread, this), 0, "client");
+		sys_api::threadCreateDetached(std::bind(&EchoClient::clientThread, this), 0, "client");
 		CY_LOG(L_DEBUG, "connect to %s:%d...", server_ip.c_str(), server_port);
 
 		//wait connect completed
-		sys_api::signal_wait(m_connected_signal);
+		sys_api::signalWait(m_connected_signal);
 	}
 
 private:
@@ -64,7 +64,7 @@ private:
 			success ? "OK" : "FAILED");
 
 		if (success) {
-			sys_api::signal_notify(m_connected_signal);
+			sys_api::signalNotify(m_connected_signal);
 			return 0;
 		}
 		else
@@ -81,7 +81,7 @@ private:
 		RingBuf& buf = conn->get_input_buf();
 
 		char temp[MAX_ECHO_LENGTH +1] = { 0 };
-		buf.memcpy_out(temp, MAX_ECHO_LENGTH);
+		buf.memcpyOut(temp, MAX_ECHO_LENGTH);
 
 		CY_LOG(L_INFO, "%s", temp);
 	}
@@ -106,12 +106,12 @@ public:
 	EchoClient()
 		: m_client(nullptr)
 	{
-		m_connected_signal = sys_api::signal_create();
+		m_connected_signal = sys_api::signalCreate();
 	}
 
 	~EchoClient()
 	{
-		sys_api::signal_destroy(m_connected_signal);
+		sys_api::signalDestroy(m_connected_signal);
 	}
 };
 

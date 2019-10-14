@@ -89,7 +89,7 @@ bool LockFreeQueue<ELEM_T, Q_SIZE>::push(const ELEM_T &data)
 		// this is a good place to yield the thread in case there are more
 		// software threads than hardware processors and you have more
 		// than 1 producer thread
-		sys_api::thread_yield();
+		sys_api::threadYield();
 	}
 
 	// The value was successfully inserted into the queue

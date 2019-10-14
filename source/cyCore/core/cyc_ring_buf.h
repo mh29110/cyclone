@@ -50,7 +50,7 @@ public:
 	}
 
 	//// return the number of free/available bytes in the ring buffer.
-	size_t get_free_size(void) const {
+	size_t getFreeSize(void) const {
 		return (m_write >= m_read) ? (m_end - m_write + m_read - 1) : (m_read - m_write - 1);
 	}
 
@@ -61,14 +61,14 @@ public:
 
 	/// return is full
 	bool full(void) const {
-		return get_free_size() == 0;
+		return getFreeSize() == 0;
 	}
 
 	////  copy n bytes from a contiguous memory area into the ring buffer
-	void memcpy_into(const void *src, size_t count);
+	void memcpyInto(const void *src, size_t count);
 
 	//// copy n bytes from the ring buffer into a contiguous memory area dst
-	size_t memcpy_out(void *dst, size_t count);
+	size_t memcpyOut(void *dst, size_t count);
 
 	//// copy data to another ringbuf dst
 	size_t copyto(RingBuf* dst, size_t count);
@@ -83,12 +83,12 @@ public:
 	//// call read on the socket descriptor(fd), using the ring buffer rb as the 
 	//// destination buffer for the read, and read as more data as impossible data.
 	//// set extra_read to false if you don't want expand this ringbuf
-	ssize_t read_socket(socket_t fd, bool extra_read=true);
+	ssize_t readSocket(socket_t fd, bool extraRead=true);
 
 	//// call write on the socket descriptor(fd), using the ring buffer rb as the 
 	//// source buffer for writing, In Linux platform, it will only call writev
 	//// once, and may return a short count.
-	ssize_t write_socket(socket_t fd);
+	ssize_t writeSocket(socket_t fd);
 
 	//// caculate the checksum(adler32) of data from off to off+len
 	//// if off greater than size() or off+count greater than size() 
@@ -109,7 +109,7 @@ private:
 	size_t m_write;
 
 private:
-	void _auto_resize(size_t need_size);
+	void _autoResize(size_t need_size);
 };
 
 }

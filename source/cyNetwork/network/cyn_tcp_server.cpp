@@ -41,21 +41,21 @@ bool TcpServer::bind(const Address& bind_addr, bool enable_reuse_port)
 	if (m_running > 0) return false;
 
 	//create a non blocking socket
-	socket_t sfd = socket_api::create_socket();
+	socket_t sfd = socket_api::createSocket();
 	if (sfd == INVALID_SOCKET) {
 		CY_LOG(L_ERROR, "create socket error");
 		return false;
 	}
 
 	//set socket to non-block mode
-	if (!socket_api::set_nonblock(sfd, true)) {
+	if (!socket_api::setNonBlock(sfd, true)) {
 		//the process should be stop		
 		CY_LOG(L_ERROR, "set socket to non block mode error");
 		return false;
 	}
 
 	//set socket close on exe flag, the file  descriptor will be closed open across an execve.
-	socket_api::set_close_onexec(sfd, true);
+	socket_api::setCloseOnExec(sfd, true);
 
 	//set accept socket option
 #ifdef CY_SYS_WINDOWS
@@ -64,14 +64,14 @@ bool TcpServer::bind(const Address& bind_addr, bool enable_reuse_port)
 	if (enable_reuse_port) {
 		//http://stackoverflow.com/questions/14388706/socket-options-so-reuseaddr-and-so-reuseport-how-do-they-differ-do-they-mean-t
 		socket_api::set_reuse_port(sfd, true);
-		socket_api::set_reuse_addr(sfd, true);
+		socket_api::setReuseAddr(sfd, true);
 	}
 #endif
 
 	//bind address
 	if (!(socket_api::bind(sfd, bind_addr.get_sockaddr_in()))){
 		CY_LOG(L_ERROR, "bind to address %s:%d failed", bind_addr.get_ip(), bind_addr.get_port());
-		socket_api::close_socket(sfd);
+		socket_api::closeSocket(sfd);
 		return false;
 	}
 
@@ -126,7 +126,7 @@ Address TcpServer::get_bind_address(size_t index)
 	if (index >= m_acceptor_sockets.size()) return address;
 
 	sockaddr_in addr;
-	socket_api::getsockname(std::get<0>(m_acceptor_sockets[index]), addr);
+	socket_api::getSockName(std::get<0>(m_acceptor_sockets[index]), addr);
 
 	return Address(addr);
 }
@@ -270,7 +270,7 @@ void TcpServer::_on_accept_message(Packet* message)
 		}
 		//close socket
 		if (sfd != INVALID_SOCKET) {
-			socket_api::close_socket(sfd);
+			socket_api::closeSocket(sfd);
 			sfd = INVALID_SOCKET;
 		}
 	}

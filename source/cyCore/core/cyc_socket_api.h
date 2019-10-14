@@ -12,19 +12,19 @@ namespace socket_api
 {
 
 //// init global socket data( call WSAStartup at windows system)
-void global_init(void);
+void globalInit(void);
 
 /// Creates a blocking socket file descriptor, return INVALID_SOCKET if failed
-socket_t create_socket(void);
+socket_t createSocket(void);
 
 /// Close socket
-void close_socket(socket_t s);
+void closeSocket(socket_t s);
 
 /// enable/disable socket non-block mode
-bool set_nonblock(socket_t s, bool enable);
+bool setNonBlock(socket_t s, bool enable);
 
 /// enable/disable socket close-on-exec mode
-bool set_close_onexec(socket_t s, bool enable);
+bool setCloseOnExec(socket_t s, bool enable);
 
 /// bind a local name to a socket
 bool bind(socket_t s, const struct sockaddr_in& addr);
@@ -54,44 +54,44 @@ bool inet_pton(const char* ip, struct in_addr& a);
 bool inet_ntop(const struct in_addr& a, char *dst, socklen_t size);
 
 /// socket operation
-bool setsockopt(socket_t s, int level, int optname, const void *optval, size_t optlen);
+bool setSockOpt(socket_t s, int level, int optname, const void *optval, size_t optlen);
 
 /// Enable/disable SO_REUSEADDR
-bool set_reuse_addr(socket_t s, bool on);
+bool setReuseAddr(socket_t s, bool on);
 
 /// Enable/disable SO_REUSEPORT
-bool set_reuse_port(socket_t s, bool on);
+bool setReusePort(socket_t s, bool on);
 
 /// Enable/disable SO_KEEPALIVE
-bool set_keep_alive(socket_t s, bool on);
+bool setKeepAlive(socket_t s, bool on);
 
 /// Enable/disable TCP_NODELAY
-bool set_nodelay(socket_t s, bool on);
+bool setNoDelay(socket_t s, bool on);
 
 /// Set socket SO_LINGER
-bool set_linger(socket_t s, bool on, uint16_t linger_time);
+bool setLinger(socket_t s, bool on, uint16_t linger_time);
 
 /// get socket error
-int get_socket_error(socket_t sockfd);
+int getSocketError(socket_t sockfd);
 
 /// get local name of socket
-bool getsockname(socket_t s, struct sockaddr_in& addr);
+bool getSockName(socket_t s, struct sockaddr_in& addr);
 
 /// get peer name of socket
-bool getpeername(socket_t s, struct sockaddr_in& addr);
+bool getPeerName(socket_t s, struct sockaddr_in& addr);
 
 ///resolve hostname to IP address, not changing port or sin_family
-bool resolve_hostname(const char* hostname, struct sockaddr_in& addr);
+bool resolveHostName(const char* hostname, struct sockaddr_in& addr);
 
 /// big-endian/little-endian convert
 uint16_t ntoh_16(uint16_t x);
 uint32_t ntoh_32(uint32_t x);
 
 //// get last socket error
-int get_lasterror(void);
+int getLastError(void);
 
 //// is lasterror  WOULDBLOCK
-bool is_lasterror_WOULDBLOCK(void);
+bool isLastErrorWOULDBLOCK(void);
 
 }
 }

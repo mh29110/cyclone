@@ -25,7 +25,7 @@ class ChatServer
 public:
 	void startAndJoin(uint16_t server_port)
 	{
-		m_clients_lock = sys_api::mutex_create();
+		m_clients_lock = sys_api::mutexCreate();
 
 		TcpServer server("chat_server", nullptr);
 		server.m_listener.onConnected = std::bind(&ChatServer::onClientConnected, this, _3);
@@ -34,11 +34,11 @@ public:
 
 		if (!server.bind(Address(server_port, false), false)) return;
 
-		if (!(server.start(sys_api::get_cpu_counts()))) return;
+		if (!(server.start(sys_api::getCPUCounts()))) return;
 
 		server.join();
 
-		sys_api::mutex_destroy(m_clients_lock);
+		sys_api::mutexDestroy(m_clients_lock);
 	}
 private:
 	//-------------------------------------------------------------------------------------

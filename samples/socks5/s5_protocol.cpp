@@ -7,7 +7,7 @@ void s5_build_handshake_act(RingBuf& outputBuf)
 
 	socks5_version_ack[0] = S5_VERSION;
 	socks5_version_ack[1] = S5_METHOD_NO_AUTH;
-	outputBuf.memcpy_into(socks5_version_ack, sizeof(socks5_version_ack));
+	outputBuf.memcpyInto(socks5_version_ack, sizeof(socks5_version_ack));
 }
 
 //-------------------------------------------------------------------------------------
@@ -15,12 +15,12 @@ void s5_build_connect_act(RingBuf& outputBuf, uint8_t reply, const Address& addr
 {
 	//head
 	uint8_t temp[4] = { S5_VERSION, reply, 0, 0x01 };
-	outputBuf.memcpy_into(temp, 4);
+	outputBuf.memcpyInto(temp, 4);
 
 	//address
 	const sockaddr_in& addr = address.get_sockaddr_in();
-	outputBuf.memcpy_into(&addr.sin_addr.s_addr, sizeof(addr.sin_addr.s_addr));
-	outputBuf.memcpy_into(&addr.sin_port, sizeof(addr.sin_port));
+	outputBuf.memcpyInto(&addr.sin_addr.s_addr, sizeof(addr.sin_addr.s_addr));
+	outputBuf.memcpyInto(&addr.sin_port, sizeof(addr.sin_port));
 }
 
 //-------------------------------------------------------------------------------------
@@ -75,8 +75,8 @@ int32_t s5_get_connect_request(RingBuf& inputBuf, Address& address, std::string&
 		memset(&addr, 0, sizeof(addr));
 
 		addr.sin_family = AF_INET;
-		inputBuf.memcpy_out(&(addr.sin_addr.s_addr), 4);
-		inputBuf.memcpy_out(&(addr.sin_port), 2);
+		inputBuf.memcpyOut(&(addr.sin_addr.s_addr), 4);
+		inputBuf.memcpyOut(&(addr.sin_port), 2);
 
 		address = Address(addr);
 		domain = address.get_ip();
@@ -93,16 +93,16 @@ int32_t s5_get_connect_request(RingBuf& inputBuf, Address& address, std::string&
 		inputBuf.discard(5);
 
 		char domain_name[260] = { 0 };
-		inputBuf.memcpy_out(domain_name, domain_length);
+		inputBuf.memcpyOut(domain_name, domain_length);
 		
 		sockaddr_in addr;
 		memset(&addr, 0, sizeof(addr));
 
 		addr.sin_family = AF_INET;
-		inputBuf.memcpy_out(&(addr.sin_port), 2);
+		inputBuf.memcpyOut(&(addr.sin_port), 2);
 
 		//resolve
-		if (!socket_api::resolve_hostname(domain_name, addr)) return S5ERR_DNS_FAILED;
+		if (!socket_api::resolveHostName(domain_name, addr)) return S5ERR_DNS_FAILED;
 		address = Address(addr);
 		domain = domain_name;
 	}

@@ -85,7 +85,7 @@ private:
 			return;
 		}
 		//set tcp nodelay
-		socket_api::set_nodelay(conn->get_socket(), true);
+		socket_api::setNoDelay(conn->get_socket(), true);
 
 		RelaySession newSession(conn->get_id(), conn);
 		m_sessionMap.insert({ conn->get_id(), newSession });
@@ -120,7 +120,7 @@ private:
 			packet.build((size_t)RELAY_PACKET_HEADSIZE, (uint16_t)RelayForwardMsg::ID, (uint16_t)(sizeof(RelayForwardMsg) + buf_round_size), nullptr);
 
 			memcpy(packet.get_packet_content(), &forwardMsg, sizeof(forwardMsg));
-			ringBuf.memcpy_out(packet.get_packet_content() + sizeof(forwardMsg), msgSize);
+			ringBuf.memcpyOut(packet.get_packet_content() + sizeof(forwardMsg), msgSize);
 
 			//encrypt and send
 			if (m_encryptMode)
@@ -161,7 +161,7 @@ private:
 
 		if (success) {
 			//set tcp nodelay
-			socket_api::set_nodelay(conn->get_socket(), true);
+			socket_api::setNoDelay(conn->get_socket(), true);
 
 			//send handshake message
 			RelayHandshakeMsg handshake;
@@ -316,7 +316,7 @@ private:
         m_upClient = nullptr;
         m_upState = kDisConnected;
         
-		sys_api::thread_create_detached([](void* server) {
+		sys_api::threadCreateDetached([](void* server) {
 			((TcpServer*)server)->stop();
 		}, m_downServer, "");
 	}

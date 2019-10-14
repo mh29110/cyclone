@@ -22,10 +22,10 @@ namespace sys_api
 //----------------------
 
 //// get current process id
-pid_t process_get_id(void);
+pid_t processGetID(void);
 
 //// get current process name
-void process_get_module_name(char* module_name, size_t max_size);
+void processGetModuleName(char* module_name, size_t max_size);
 
 //----------------------
 // thread functions
@@ -35,28 +35,28 @@ void process_get_module_name(char* module_name, size_t max_size);
 typedef std::function<void(void*)> thread_function;
 
 //// get current thread id
-thread_id_t thread_get_current_id(void);
+thread_id_t threadGetCurrentID(void);
 
 //// get the system id of thread
-thread_id_t thread_get_id(thread_t t);
+thread_id_t threadGetID(thread_t t);
 
-//// create a new thread(use thread_join to release resources)
-thread_t thread_create(thread_function func, void* param, const char* name);
+//// create a new thread(use threadJoin to release resources)
+thread_t threadCreate(thread_function func, void* param, const char* name);
 
 //// create a new thread(all thread resources will be released automatic)
-void thread_create_detached(thread_function func, void* param, const char* name);
+void threadCreateDetached(thread_function func, void* param, const char* name);
 
 //// sleep in current thread(milliseconds)
-void thread_sleep(int32_t msec);
+void threadSleep(int32_t msec);
 
 //// wait the thread to terminate
-void thread_join(thread_t t);
+void threadJoin(thread_t t);
 
 //// get current thread name
-const char* thread_get_current_name(void);
+const char* threadGetCurrentName(void);
 
 //// yield the processor
-void thread_yield(void);
+void threadYield(void);
 
 //----------------------
 // mutex functions
@@ -68,22 +68,22 @@ typedef pthread_mutex_t* mutex_t;
 #endif
 
 /// create a mutex
-mutex_t mutex_create(void);
+mutex_t mutexCreate(void);
 
 /// destroy a mutex
-void mutex_destroy(mutex_t m);
+void mutexDestroy(mutex_t m);
 
 /// lock mutex(wait other owner unlock)
-void mutex_lock(mutex_t m);
+void mutexLock(mutex_t m);
 
 /// unlock mutex
-void mutex_unlock(mutex_t m);
+void mutexUnlock(mutex_t m);
 
 /// auto lock
 struct auto_mutex
 {
-	auto_mutex(mutex_t m) : _m(m) { mutex_lock(_m); }
-	~auto_mutex() { mutex_unlock(_m); }
+	auto_mutex(mutex_t m) : _m(m) { mutexLock(_m); }
+	~auto_mutex() { mutexUnlock(_m); }
 	mutex_t _m;
 };
 
@@ -98,34 +98,34 @@ typedef void*	signal_t;
 #endif
 
 //// create a signal
-signal_t signal_create(void);
+signal_t signalCreate(void);
 
 //// destroy a signal
-void signal_destroy(signal_t s);
+void signalDestroy(signal_t s);
 
 //// wait a signal inifinite
-void signal_wait(signal_t s);
+void signalWait(signal_t s);
 
 //// wait a signal in [t] millisecond(second*1000), return true immediately if the signal is lighted, if false if timeout or other error
-bool signal_timewait(signal_t s, uint32_t ms);
+bool signalTimeWait(signal_t s, uint32_t ms);
 
 //// light the signal
-void signal_notify(signal_t s);
+void signalNotify(signal_t s);
 
 //----------------------
 // time functions
 //----------------------
 
 //// get time in microseconds(second*1000*1000) from Epoch
-int64_t time_now(void);
+int64_t timeNow(void);
 
 /// get time in format string(strftime)
-void time_now(char* time_dest, size_t max_size, const char* format);
+void timeNow(char* time_dest, size_t max_size, const char* format);
 
 //----------------------
 // utility functions
 //----------------------
-int32_t get_cpu_counts(void);
+int32_t getCPUCounts(void);
 
 }
 }

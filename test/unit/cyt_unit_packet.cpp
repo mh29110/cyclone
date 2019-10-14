@@ -82,14 +82,14 @@ TEST(Packet, Basic)
 	RingBuf rb;
 	EXPECT_FALSE(packet.build(HEAD_SIZE, rb));
 
-	rb.memcpy_into(_makeHead(buf_size, PACKET_ID, head), sizeof(uint32_t));
-	rb.memcpy_into(&RESERVED, sizeof(RESERVED));
+	rb.memcpyInto(_makeHead(buf_size, PACKET_ID, head), sizeof(uint32_t));
+	rb.memcpyInto(&RESERVED, sizeof(RESERVED));
 	EXPECT_FALSE(packet.build(HEAD_SIZE, rb));
 
-	rb.memcpy_into(temp_buf, half_size);
+	rb.memcpyInto(temp_buf, half_size);
 	EXPECT_FALSE(packet.build(HEAD_SIZE, rb));
 
-	rb.memcpy_into(temp_buf+ half_size, half_size);
+	rb.memcpyInto(temp_buf+ half_size, half_size);
 	EXPECT_TRUE(packet.build(HEAD_SIZE, rb));
 	PACKET_CHECK_WITH_RESERVED(buf_size, PACKET_ID, HEAD_SIZE, temp_buf, &RESERVED, sizeof(RESERVED));
 

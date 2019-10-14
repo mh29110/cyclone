@@ -56,12 +56,12 @@ static void _onRead(Looper::event_id_t id, socket_t fd, Looper::event_t event, v
 	SocketPair* socketPair = (SocketPair*)param;
 	ReadThreadData* data = (ReadThreadData*)(socketPair->param);
 
-	ssize_t read_size = socketPair->rb.read_socket(fd);
+	ssize_t read_size = socketPair->rb.readSocket(fd);
 	if (read_size > 0) {
 		data->actived_counts += (uint32_t)((uint32_t)read_size / sizeof(uint64_t));
 
 		if (data->actived_counts.load() >= data->active_counts) {
-			sys_api::signal_notify(data->read_done_signal);
+			sys_api::signalNotify(data->read_done_signal);
 		}
 	}
 	else {
@@ -70,7 +70,7 @@ static void _onRead(Looper::event_id_t id, socket_t fd, Looper::event_t event, v
 		(data->closed_counts)++;
 
 		if (data->closed_counts.load() >= data->close_counts) {
-			sys_api::signal_notify(data->close_done_signal);
+			sys_api::signalNotify(data->close_done_signal);
 		}
 	}
 }
@@ -88,7 +88,7 @@ static void _readThreadFunction(void* param)
 		sp->event_id = looper->register_event(sp->m_fd[0], Looper::kRead, sp, _onRead, 0);
 	}
 
-	sys_api::signal_notify(data->ready_signal);
+	sys_api::signalNotify(data->ready_signal);
 	looper->loop();
 
 	delete looper;
@@ -131,12 +131,12 @@ static void _writeThreadFunction(void* param)
 		sp->event_id = looper->register_event(sp->m_fd[0], Looper::kWrite, sp, 0, _onWrite);
 	}
 
-	sys_api::signal_notify(data->ready_signal);
+	sys_api::signalNotify(data->ready_signal);
 
 	looper->loop();
 
-	sys_api::signal_notify(data->loop_stoped_signal);
-	sys_api::signal_wait(data->quit_signal);
+	sys_api::signalNotify(data->loop_stoped_signal);
+	sys_api::signalWait(data->quit_signal);
 
 	delete looper;
 	data->looper = nullptr;
@@ -146,9 +146,9 @@ static void _writeThreadFunction(void* param)
 TEST(EventLooper, ReadAndCloseSocket)
 {
 	ReadThreadData data;
-	data.ready_signal = sys_api::signal_create();
-	data.read_done_signal = sys_api::signal_create();
-	data.close_done_signal = sys_api::signal_create();
+	data.ready_signal = sys_api::signalCreate();
+	data.read_done_signal = sys_api::signalCreate();
+	data.close_done_signal = sys_api::signalCreate();
 
 	//read event
 	{
@@ -167,8 +167,8 @@ TEST(EventLooper, ReadAndCloseSocket)
 			data.socketPairs.push_back(sp);
 		}
 
-		thread_t thread = sys_api::thread_create(_readThreadFunction, &data, "looper_socket");
-		sys_api::signal_wait(data.ready_signal);
+		thread_t thread = sys_api::threadCreate(_readThreadFunction, &data, "looper_socket");
+		sys_api::signalWait(data.ready_signal);
 
 		//send to some of socket
 		std::vector< size_t > activeIDs;
@@ -181,14 +181,14 @@ TEST(EventLooper, ReadAndCloseSocket)
 		}
 		EXPECT_EQ(data.active_counts, activeIDs.size());
 
-		sys_api::signal_wait(data.read_done_signal);
+		sys_api::signalWait(data.read_done_signal);
 
 		//begin check
 		EXPECT_GE(data.actived_counts.load(), data.active_counts);
 		for (size_t i = 0; i < data.active_counts; i++) {
 			size_t index = activeIDs[i];
 			uint64_t rcvData = 0;
-			EXPECT_EQ(sizeof(rcvData), data.socketPairs[index]->rb.memcpy_out(&rcvData, sizeof(rcvData)));
+			EXPECT_EQ(sizeof(rcvData), data.socketPairs[index]->rb.memcpyOut(&rcvData, sizeof(rcvData)));
 			EXPECT_EQ(rcvData, rndCheck.next());
 		}
 		activeIDs.clear();
@@ -201,7 +201,7 @@ TEST(EventLooper, ReadAndCloseSocket)
 
 		//quit...
 		data.looper->push_stop_request();
-		sys_api::thread_join(thread);
+		sys_api::threadJoin(thread);
 
 		for (size_t i = 0; i < data.socketPairs.size(); i++) {
 			delete data.socketPairs[i];
@@ -222,8 +222,8 @@ TEST(EventLooper, ReadAndCloseSocket)
 			data.socketPairs.push_back(sp);
 		}
 
-		thread_t thread = sys_api::thread_create(_readThreadFunction, &data, "looper_socket");
-		sys_api::signal_wait(data.ready_signal);
+		thread_t thread = sys_api::threadCreate(_readThreadFunction, &data, "looper_socket");
+		sys_api::signalWait(data.ready_signal);
 
 		//remember all ids
 		std::set < Looper::event_id_t > allIDs;
@@ -240,13 +240,13 @@ TEST(EventLooper, ReadAndCloseSocket)
 				index = (size_t)rand() % data.socket_counts;
 			}
 
-			socket_api::close_socket(data.socketPairs[index]->m_fd[1]);
+			socket_api::closeSocket(data.socketPairs[index]->m_fd[1]);
 			data.socketPairs[index]->m_fd[1] = INVALID_SOCKET;
 
 			closeIDs.insert(data.socketPairs[index]->event_id);
 		}
 		EXPECT_EQ(data.close_counts, closeIDs.size());
-		sys_api::signal_wait(data.close_done_signal);
+		sys_api::signalWait(data.close_done_signal);
 
 		//begin check
 		const auto& channel_buf = data.looper->get_channel_buf();
@@ -270,7 +270,7 @@ TEST(EventLooper, ReadAndCloseSocket)
 
 		//quit...
 		data.looper->push_stop_request();
-		sys_api::thread_join(thread);
+		sys_api::threadJoin(thread);
 
 		for (size_t i = 0; i < data.socketPairs.size(); i++) {
 			delete data.socketPairs[i];
@@ -278,18 +278,18 @@ TEST(EventLooper, ReadAndCloseSocket)
 		data.socketPairs.clear();
 	}
 
-	sys_api::signal_destroy(data.ready_signal);
-	sys_api::signal_destroy(data.read_done_signal);
-	sys_api::signal_destroy(data.close_done_signal);
+	sys_api::signalDestroy(data.ready_signal);
+	sys_api::signalDestroy(data.read_done_signal);
+	sys_api::signalDestroy(data.close_done_signal);
 }
 
 //-------------------------------------------------------------------------------------
 TEST(EventLooper, WriteSocket)
 {
 	WriteThreadData data;
-	data.ready_signal = sys_api::signal_create();
-	data.loop_stoped_signal = sys_api::signal_create();
-	data.quit_signal = sys_api::signal_create();
+	data.ready_signal = sys_api::signalCreate();
+	data.loop_stoped_signal = sys_api::signalCreate();
+	data.quit_signal = sys_api::signalCreate();
 
 	//write test
 	{
@@ -300,19 +300,19 @@ TEST(EventLooper, WriteSocket)
 			data.socketPairs.push_back(sp);
 		}
 
-		thread_t thread = sys_api::thread_create(_writeThreadFunction, &data, "looper_socket");
-		sys_api::signal_wait(data.ready_signal);
+		thread_t thread = sys_api::threadCreate(_writeThreadFunction, &data, "looper_socket");
+		sys_api::signalWait(data.ready_signal);
 
-		sys_api::thread_sleep(100); //fly some time
+		sys_api::threadSleep(100); //fly some time
 
 		//quit...
 		data.looper->push_stop_request();
-		sys_api::signal_wait(data.loop_stoped_signal);
+		sys_api::signalWait(data.loop_stoped_signal);
 		
 		uint64_t loop_counts = data.looper->get_loop_counts();
 
-		sys_api::signal_notify(data.quit_signal);
-		sys_api::thread_join(thread);
+		sys_api::signalNotify(data.quit_signal);
+		sys_api::threadJoin(thread);
 
 		for (size_t i = 0; i < data.socketPairs.size(); i++) {
 			EXPECT_GE(data.socketPairs[i]->write_counts.load(), loop_counts - 1);
@@ -322,9 +322,9 @@ TEST(EventLooper, WriteSocket)
 		data.socketPairs.clear();
 	}
 
-	sys_api::signal_destroy(data.ready_signal);
-	sys_api::signal_destroy(data.loop_stoped_signal);
-	sys_api::signal_destroy(data.quit_signal);
+	sys_api::signalDestroy(data.ready_signal);
+	sys_api::signalDestroy(data.loop_stoped_signal);
+	sys_api::signalDestroy(data.quit_signal);
 }
 
 }

@@ -32,7 +32,7 @@ RingBuf::~RingBuf()
 }
 
 //-------------------------------------------------------------------------------------
-void RingBuf::_auto_resize(size_t need_size)
+void RingBuf::_autoResize(size_t need_size)
 {
 	//auto inc size
 	size_t new_size = 2;
@@ -41,7 +41,7 @@ void RingBuf::_auto_resize(size_t need_size)
 	//copy old data
 	size_t old_size = size();
 	uint8_t* buf = (uint8_t*)CY_MALLOC(new_size);
-	this->memcpy_out(buf, old_size);
+	this->memcpyOut(buf, old_size);
 
 	//free old buf
 	CY_FREE(m_buf);
@@ -54,10 +54,10 @@ void RingBuf::_auto_resize(size_t need_size)
 }
 
 //-------------------------------------------------------------------------------------
-void RingBuf::memcpy_into(const void *src, size_t count)
+void RingBuf::memcpyInto(const void *src, size_t count)
 {
-	if (get_free_size() < count) {
-		_auto_resize(size() + count + 1);
+	if (getFreeSize() < count) {
+		_autoResize(size() + count + 1);
 	}
 
 	char* csrc = (char*)src;
@@ -76,7 +76,7 @@ void RingBuf::memcpy_into(const void *src, size_t count)
 }
 
 //-------------------------------------------------------------------------------------
-size_t RingBuf::memcpy_out(void *dst, size_t count)
+size_t RingBuf::memcpyOut(void *dst, size_t count)
 {
 	size_t bytes_used = size();
 	if (count > bytes_used)
@@ -109,7 +109,7 @@ size_t RingBuf::copyto(RingBuf* dst, size_t count)
 	size_t nread = 0;
 	while (nread != count) {
 		size_t n = MIN((size_t)(m_end - m_read), count - nread);
-		dst->memcpy_into(m_buf + m_read, n);
+		dst->memcpyInto(m_buf + m_read, n);
 		m_read += n;
 		nread += n;
 
@@ -164,14 +164,14 @@ size_t RingBuf::discard(size_t count)
 }
 
 //-------------------------------------------------------------------------------------
-ssize_t RingBuf::read_socket(socket_t fd, bool extra_buf)
+ssize_t RingBuf::readSocket(socket_t fd, bool extraRead)
 {
 	const size_t STACK_BUF_SIZE = 0xFFFF;
 	char stack_buf[STACK_BUF_SIZE];
 
 #ifndef CY_HAVE_READWRITE_V
 	//TODO: it is not correct to call read() more than once in on event call!
-	size_t count = get_free_size();
+	size_t count = getFreeSize();
 
 	//in windows call read three times maxmium
 	ssize_t nwritten = 0;
@@ -179,7 +179,7 @@ ssize_t RingBuf::read_socket(socket_t fd, bool extra_buf)
 		ssize_t n = (ssize_t)MIN((size_t)(m_end - m_write), count - nwritten);
 		ssize_t len = socket_api::read(fd, m_buf + m_write, (ssize_t)n);
 		if (len == 0) return 0; //EOF
-		if (len < 0) return socket_api::is_lasterror_WOULDBLOCK() ? nwritten : len;
+		if (len < 0) return socket_api::isLastErrorWOULDBLOCK() ? nwritten : len;
 
 		m_write += len;
 		nwritten += len;
@@ -192,11 +192,11 @@ ssize_t RingBuf::read_socket(socket_t fd, bool extra_buf)
 	}
 
 	//need read more data
-	if (extra_buf) {
+	if (extraRead) {
 		ssize_t len = socket_api::read(fd, stack_buf, STACK_BUF_SIZE);
 		if (len == 0) return nwritten; //EOF
-		if (len < 0) return socket_api::is_lasterror_WOULDBLOCK() ? nwritten : len;
-		memcpy_into(stack_buf, len);
+		if (len < 0) return socket_api::isLastErrorWOULDBLOCK() ? nwritten : len;
+		memcpyInto(stack_buf, len);
 		return nwritten + len;
 	}
 	return nwritten;
@@ -204,7 +204,7 @@ ssize_t RingBuf::read_socket(socket_t fd, bool extra_buf)
 	//use vector read functon
 	struct iovec vec[3];
 	int32_t vec_counts = 0;
-	size_t count = get_free_size();
+	size_t count = getFreeSize();
 
 	size_t nwritten = 0;
 	size_t write_off = m_write;
@@ -222,7 +222,7 @@ ssize_t RingBuf::read_socket(socket_t fd, bool extra_buf)
 	}
 
 	//add extra buff
-	if (extra_buf) {
+	if (extraRead) {
 		vec[vec_counts].iov_base = stack_buf;
 		vec[vec_counts].iov_len = STACK_BUF_SIZE;
 		vec_counts++;
@@ -233,7 +233,7 @@ ssize_t RingBuf::read_socket(socket_t fd, bool extra_buf)
 	if (read_counts <= 0) return read_counts;	//error
 
 	//adjust point
-	count = MIN(get_free_size(), (size_t)read_counts);
+	count = MIN(getFreeSize(), (size_t)read_counts);
 	nwritten = 0;
 	while (nwritten != count)	{
 		size_t n = MIN((size_t)(m_end - m_write), count - nwritten);
@@ -247,8 +247,8 @@ ssize_t RingBuf::read_socket(socket_t fd, bool extra_buf)
 
 	//append extra data
 	if (nwritten < (size_t)read_counts) {
-		assert(extra_buf);
-		memcpy_into(stack_buf, (size_t)read_counts - nwritten);
+		assert(extraRead);
+		memcpyInto(stack_buf, (size_t)read_counts - nwritten);
 	}
 
 	return read_counts;
@@ -256,7 +256,7 @@ ssize_t RingBuf::read_socket(socket_t fd, bool extra_buf)
 }
 
 //-------------------------------------------------------------------------------------
-ssize_t RingBuf::write_socket(socket_t fd)
+ssize_t RingBuf::writeSocket(socket_t fd)
 {
 	assert(!empty());
 

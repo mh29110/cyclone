@@ -27,49 +27,49 @@ struct DiskLogFile
 #define _MAX_PATH (260)
 #endif
 
-	char file_name[_MAX_PATH];
-	sys_api::mutex_t lock;
-	const char* level_name[L_MAXIMUM_LEVEL];
-	LOG_LEVEL level_threshold;
-	bool logpath_created;
+	char m_fileName[_MAX_PATH];
+	sys_api::mutex_t m_lock;
+	const char* m_levelName[L_MAXIMUM_LEVEL];
+	LOG_LEVEL m_levelThreshold;
+	bool m_bLogPathCreated;
 
 	DiskLogFile() 
 	{
 #ifdef CY_SYS_WINDOWS
-		socket_api::global_init();
+		socket_api::globalInit();
 #endif
 		//get process name
 		char process_name[256] = { 0 };
-		sys_api::process_get_module_name(process_name, 256);
+		sys_api::processGetModuleName(process_name, 256);
 		
 		//get host name
 		char host_name[256];
 		::gethostname(host_name, 256);
 
 		//get process id
-		pid_t process_id = sys_api::process_get_id();
+		pid_t process_id = sys_api::processGetID();
 
 		//log filename patten
 		char name_patten[256] = { 0 };
 		snprintf(name_patten, 256, LOG_PATH"%s.%%Y%%m%%d-%%H%%M%%S.%s.%d.log", process_name, host_name, process_id);
-		sys_api::time_now(file_name, 256, name_patten);
+		sys_api::timeNow(m_fileName, 256, name_patten);
 
 		//create lock
-		lock = sys_api::mutex_create();
+		m_lock = sys_api::mutexCreate();
 
 		//default level(all level will be writed)
-		level_threshold = L_TRACE;
+		m_levelThreshold = L_TRACE;
 
 		//log path didn't created
-		logpath_created = false;
+		m_bLogPathCreated = false;
 
 		//set level name
-		level_name[L_TRACE] = "[T]";
-		level_name[L_DEBUG] = "[D]";
-		level_name[L_INFO]  = "[I]";
-		level_name[L_WARN]  = "[W]";
-		level_name[L_ERROR] = "[E]";
-		level_name[L_FATAL] = "[F]";
+		m_levelName[L_TRACE] = "[T]";
+		m_levelName[L_DEBUG] = "[D]";
+		m_levelName[L_INFO]  = "[I]";
+		m_levelName[L_WARN]  = "[W]";
+		m_levelName[L_ERROR] = "[E]";
+		m_levelName[L_FATAL] = "[F]";
 	}
 };
 
@@ -84,7 +84,7 @@ static DiskLogFile& _getDiskLog(void)
 const char* getLogFileName(void)
 {
 	DiskLogFile& thefile = _getDiskLog();
-	return thefile.file_name;
+	return thefile.m_fileName;
 }
 
 //-------------------------------------------------------------------------------------
@@ -94,9 +94,9 @@ void setLogThreshold(LOG_LEVEL level)
 	if (level < 0 || level > L_MAXIMUM_LEVEL)return;
 
 	DiskLogFile& thefile = _getDiskLog();
-	sys_api::auto_mutex guard(thefile.lock);
+	sys_api::auto_mutex guard(thefile.m_lock);
 
-	thefile.level_threshold = level;
+	thefile.m_levelThreshold = level;
 }
 
 //-------------------------------------------------------------------------------------
@@ -106,35 +106,35 @@ void diskLog(LOG_LEVEL level, const char* message, ...)
 	if (level < 0 || level >= L_MAXIMUM_LEVEL)return;
 
 	DiskLogFile& thefile = _getDiskLog();
-	sys_api::auto_mutex guard(thefile.lock);
+	sys_api::auto_mutex guard(thefile.m_lock);
 
 	//check the level
-	if (level < thefile.level_threshold) return;
+	if (level < thefile.m_levelThreshold) return;
 
 	//check dir
 #ifdef CY_SYS_WINDOWS
-	if (!thefile.logpath_created && PathFileExists(LOG_PATH)!=TRUE) {
+	if (!thefile.m_bLogPathCreated && PathFileExists(LOG_PATH)!=TRUE) {
 		if (0 == CreateDirectory(LOG_PATH, NULL)) 
 #else
-	if (!thefile.logpath_created && access(LOG_PATH, F_OK)!=0) {
+	if (!thefile.m_bLogPathCreated && access(LOG_PATH, F_OK)!=0) {
 		if (mkdir(LOG_PATH, 0755) != 0) 
 #endif
 		{
 			//create log path failed!
 			return;
 		}
-		thefile.logpath_created = true;
+		thefile.m_bLogPathCreated = true;
 	}
 
-	FILE* fp = fopen(thefile.file_name, "a");
+	FILE* fp = fopen(thefile.m_fileName, "a");
 	if (fp == 0) {
 		//create the log file first
-		fp = fopen(thefile.file_name, "w");
+		fp = fopen(thefile.m_fileName, "w");
 	}
 	if (fp == 0) return;
 
 	char timebuf[32] = { 0 };
-	sys_api::time_now(timebuf, 32, "%Y_%m_%d-%H:%M:%S");
+	sys_api::timeNow(timebuf, 32, "%Y_%m_%d-%H:%M:%S");
 
 	static const int32_t STATIC_BUF_LENGTH = 2048;
 
@@ -162,16 +162,16 @@ void diskLog(LOG_LEVEL level, const char* message, ...)
 
 	fprintf(fp, "%s %s [%s] %s\n",
 		timebuf, 
-		thefile.level_name[level],
-		sys_api::thread_get_current_name(),
+		thefile.m_levelName[level],
+		sys_api::threadGetCurrentName(),
 		p);
 	fclose(fp);
 
 	//print to stand output last
 	fprintf(level >= L_ERROR ? stderr : stdout, "%s %s [%s] %s\n",
 		timebuf,
-		thefile.level_name[level],
-		sys_api::thread_get_current_name(),
+		thefile.m_levelName[level],
+		sys_api::threadGetCurrentName(),
 		p);
 
 	if (p != szTemp) {

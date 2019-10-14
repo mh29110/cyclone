@@ -27,7 +27,7 @@ TcpClient::TcpClient(Looper* looper, void* param)
 	//looper muste be setted
 	assert(looper);
 
-	m_connection_lock = sys_api::mutex_create();
+	m_connection_lock = sys_api::mutexCreate();
 
 	m_listener.onConnected = nullptr;
 	m_listener.onMessage = nullptr;
@@ -37,9 +37,9 @@ TcpClient::TcpClient(Looper* looper, void* param)
 //-------------------------------------------------------------------------------------
 TcpClient::~TcpClient()
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 
-	sys_api::mutex_destroy(m_connection_lock);
+	sys_api::mutexDestroy(m_connection_lock);
 	m_connection_lock = nullptr;
 
 	RELEASE_EVENT(m_looper, m_socket_event_id);
@@ -53,19 +53,19 @@ TcpClient::~TcpClient()
 //-------------------------------------------------------------------------------------
 bool TcpClient::connect(const Address& addr)
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 	assert(m_socket == INVALID_SOCKET);
 
 	sys_api::auto_mutex lock(m_connection_lock);
 
 	//create socket
-	m_socket = socket_api::create_socket();
+	m_socket = socket_api::createSocket();
 	//set socket to non-block and close-onexec
-	socket_api::set_nonblock(m_socket, true);
-	socket_api::set_close_onexec(m_socket, true);
+	socket_api::setNonBlock(m_socket, true);
+	socket_api::setCloseOnExec(m_socket, true);
 	//set other socket option
-	socket_api::set_keep_alive(m_socket, true);
-	socket_api::set_linger(m_socket, false, 0);
+	socket_api::setKeepAlive(m_socket, true);
+	socket_api::setLinger(m_socket, false, 0);
 
 	m_serverAddr = addr;
 
@@ -78,7 +78,7 @@ bool TcpClient::connect(const Address& addr)
 	//start connect to server
 	if (!socket_api::connect(m_socket, addr.get_sockaddr_in()))
 	{
-		CY_LOG(L_ERROR, "connect to server error, errno=%d", socket_api::get_lasterror());
+		CY_LOG(L_ERROR, "connect to server error, errno=%d", socket_api::getLastError());
 		return false;
 	}
 
@@ -99,7 +99,7 @@ void TcpClient::_on_connect_status_changed(bool timeout)
 {
 	assert(m_connection == nullptr);
 
-	if (timeout || socket_api::get_socket_error(m_socket) != 0) {
+	if (timeout || socket_api::getSocketError(m_socket) != 0) {
 		//logic callback
 		uint32_t retry_sleep_ms = 0;
 		if (m_listener.onConnected) {
@@ -144,14 +144,14 @@ void TcpClient::_on_connect_status_changed(bool timeout)
 //-------------------------------------------------------------------------------------
 void TcpClient::_abort_connect(uint32_t retry_sleep_ms)
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 	assert(get_connection_state() == Connection::kConnecting);
 
 	RELEASE_EVENT(m_looper, m_socket_event_id);
 	RELEASE_EVENT(m_looper, m_retry_timer_id);
 
 	//close current socket
-	socket_api::close_socket(m_socket);
+	socket_api::closeSocket(m_socket);
 	m_socket = INVALID_SOCKET;
 
 	if (retry_sleep_ms>0) {
@@ -164,7 +164,7 @@ void TcpClient::_abort_connect(uint32_t retry_sleep_ms)
 //-------------------------------------------------------------------------------------
 void TcpClient::disconnect(void)
 {
-	assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
 	m_sendCache.reset();
 	switch (get_connection_state())
 	{
@@ -221,8 +221,8 @@ void TcpClient::send(const char* buf, size_t len)
 	{
 	case Connection::kConnecting:
 	{
-		assert(sys_api::thread_get_current_id() == m_looper->get_thread_id());
-		m_sendCache.memcpy_into(buf, len);
+		assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+		m_sendCache.memcpyInto(buf, len);
 	}
 		break;
 	case Connection::kConnected:

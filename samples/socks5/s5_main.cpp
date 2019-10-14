@@ -72,7 +72,7 @@ private:
 		//set next state
 		if (success) {
 			//set tcp nodelay
-			socket_api::set_nodelay(conn->get_socket(), true);
+			socket_api::setNoDelay(conn->get_socket(), true);
 
 			m_state = S5_CONNECTED;
 			CY_LOG(L_INFO, "tunnel[%d]: connect to \"%s:%d\" OK",
@@ -202,7 +202,7 @@ private:
 		CY_LOG(L_INFO, "tunnel[%d]: new tunnel", conn->get_id());
 
 		//set tcp nodelay
-		socket_api::set_nodelay(conn->get_socket(), true);
+		socket_api::setNoDelay(conn->get_socket(), true);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -302,7 +302,7 @@ int main(int argc, char* argv[])
 {
 	CSimpleOptA args(argc, argv, g_rgOptions);
 	uint16_t server_port = 1984;
-	int32_t work_thread_counts = sys_api::get_cpu_counts();
+	int32_t work_thread_counts = sys_api::getCPUCounts();
 
 	while (args.Next()) {
 		if (args.LastError() == SO_SUCCESS) {
