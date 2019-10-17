@@ -19,9 +19,9 @@ struct _dq {
 } dhkey_t;
 
 
-void DH_generate_key_pair(dhkey_t& public_key, dhkey_t& private_key);
+void DH_generateKeyPair(dhkey_t& public_key, dhkey_t& private_key);
 
-void DH_generate_key_secret(dhkey_t& secret_key, const dhkey_t& my_private, const dhkey_t& another_public);
+void DH_generateKeySecret(dhkey_t& secret_key, const dhkey_t& my_private, const dhkey_t& another_public);
 
 
 }

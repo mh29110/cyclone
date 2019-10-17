@@ -224,7 +224,7 @@ private:
 				//handshake
 				if (m_encryptMode)
 				{
-					DH_generate_key_secret(m_secretKey, m_privateKey, handshake.dh_key);
+					DH_generateKeySecret(m_secretKey, m_privateKey, handshake.dh_key);
 
 					//create encrypter
 					m_encrypt = new Rijndael(m_secretKey.bytes);
@@ -358,7 +358,7 @@ public:
 		, m_encryptMode(encryptMode)
 	{
 		if (m_encryptMode)
-			DH_generate_key_pair(m_publicKey, m_privateKey);
+			DH_generateKeyPair(m_publicKey, m_privateKey);
 		else
 			m_publicKey.dq.low = m_publicKey.dq.high = 0;
 	}

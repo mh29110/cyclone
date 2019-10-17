@@ -79,19 +79,19 @@ TEST(DHExchange, Random)
 
 		//Alice Generate private key and public key
 		dhkey_t alice_private, alice_public;
-		DH_generate_key_pair(alice_public, alice_private);
+		DH_generateKeyPair(alice_public, alice_private);
 
 		//Bob Generate private key and public key
 		dhkey_t bob_private, bob_public;
-		DH_generate_key_pair(bob_public, bob_private);
+		DH_generateKeyPair(bob_public, bob_private);
 
 		//Alice Generate secret key
 		dhkey_t alice_secret;
-		DH_generate_key_secret(alice_secret, alice_private, bob_public);
+		DH_generateKeySecret(alice_secret, alice_private, bob_public);
 
 		//Bob Generate secret key
 		dhkey_t bob_secret;
-		DH_generate_key_secret(bob_secret, bob_private, alice_public);
+		DH_generateKeySecret(bob_secret, bob_private, alice_public);
 
 		EXPECT_EQ(alice_secret.dq.low, bob_secret.dq.low);
 		EXPECT_EQ(alice_secret.dq.high, bob_secret.dq.high);
@@ -134,13 +134,13 @@ TEST(XorShift128, Basic)
 	//encrypt with special seed
 	seed.seed0 = 0xFACEDEADDEADFACEull;
 	seed.seed1 = 0x1234567812345678ull;
-	xorshift128((uint8_t*)buf, text_len, seed);
+	xorShift128((uint8_t*)buf, text_len, seed);
 
 	EXPECT_EQ(0, memcmp(buf, encrypt_text, text_len));
 
 	seed.seed0 = 0xFACEDEADDEADFACEull;
 	seed.seed1 = 0x1234567812345678ull;
-	xorshift128((uint8_t*)buf, text_len, seed);
+	xorShift128((uint8_t*)buf, text_len, seed);
 
 	ASSERT_STREQ(plain_text, buf);
 
@@ -153,8 +153,8 @@ TEST(XorShift128, Basic)
 		seed_decrypt.seed1 = seed_encrypt.seed1;
 
 		strncpy(buf, plain_text, text_len);
-		xorshift128((uint8_t*)buf, text_len, seed_encrypt);
-		xorshift128((uint8_t*)buf, text_len, seed_decrypt);
+		xorShift128((uint8_t*)buf, text_len, seed_encrypt);
+		xorShift128((uint8_t*)buf, text_len, seed_decrypt);
 		ASSERT_STREQ(plain_text, buf);
 	}
 

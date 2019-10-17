@@ -141,7 +141,7 @@ private:
 			if (bRemoteEncrypt)
 			{
 				//handshake
-				DH_generate_key_secret(m_secretKey, m_privateKey, handshake.dh_key);
+				DH_generateKeySecret(m_secretKey, m_privateKey, handshake.dh_key);
 
 				//create encrypter
 				m_decrypt = new Rijndael(m_secretKey.bytes);
@@ -284,7 +284,7 @@ private:
 
 		if (m_encryptMode)
 		{
-			DH_generate_key_pair(m_publicKey, m_privateKey);
+			DH_generateKeyPair(m_publicKey, m_privateKey);
 			delete m_encrypt; m_encrypt = nullptr;
 			delete m_decrypt; m_decrypt = nullptr;
 		}
@@ -454,7 +454,7 @@ public:
 		, m_encryptMode(encryptMode)
 	{
 		if (m_encryptMode)
-			DH_generate_key_pair(m_publicKey, m_privateKey);
+			DH_generateKeyPair(m_publicKey, m_privateKey);
 		else
 			m_publicKey.dq.high = m_publicKey.dq.low = 0;
 	}

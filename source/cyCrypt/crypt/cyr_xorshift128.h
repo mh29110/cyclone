@@ -26,7 +26,7 @@ struct XorShift128 {
 	}
 };
 
-void xorshift128(uint8_t* buf, size_t byte_length, XorShift128& seed);
+void xorShift128(uint8_t* buf, size_t byte_length, XorShift128& seed);
 
 }
 

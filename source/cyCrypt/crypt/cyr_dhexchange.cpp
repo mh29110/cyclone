@@ -166,7 +166,7 @@ _powmodp(dhkey_t* r, dhkey_t a, dhkey_t b)
 }
 
 /*--------------------------------------------------------------------------*/
-void DH_generate_key_pair(dhkey_t& public_key, dhkey_t& private_key)
+void DH_generateKeyPair(dhkey_t& public_key, dhkey_t& private_key)
 {
 	/* generate random private key */
 	int i;
@@ -180,7 +180,7 @@ void DH_generate_key_pair(dhkey_t& public_key, dhkey_t& private_key)
 
 /*--------------------------------------------------------------------------*/
 void
-DH_generate_key_secret(dhkey_t& secret_key, const dhkey_t& my_private, const dhkey_t& another_public)
+DH_generateKeySecret(dhkey_t& secret_key, const dhkey_t& my_private, const dhkey_t& another_public)
 {
 	/* secret_key = other_key^prv_key mod P*/
 	_powmodp(&secret_key, another_public, my_private);

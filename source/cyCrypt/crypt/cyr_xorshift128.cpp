@@ -19,7 +19,7 @@ void XorShift128::make(void)
 }
 
 //-------------------------------------------------------------------------------------
-void xorshift128(uint8_t* buf, size_t byte_length, XorShift128& seed)
+void xorShift128(uint8_t* buf, size_t byte_length, XorShift128& seed)
 {
 	//xor per 8 bytes
 	size_t i64_counts = (byte_length >> 3);// +((byte_length & 7) ? 1 : 0);
