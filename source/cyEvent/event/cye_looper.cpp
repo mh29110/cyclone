@@ -37,7 +37,7 @@ Looper::~Looper()
 }
 
 //-------------------------------------------------------------------------------------
-Looper::event_id_t Looper::register_event(socket_t sockfd,
+Looper::event_id_t Looper::registerEvent(socket_t sockfd,
 	event_t event,
 	void* param,
 	event_callback _on_read,
@@ -47,7 +47,7 @@ Looper::event_id_t Looper::register_event(socket_t sockfd,
 	sys_api::auto_mutex lock(m_lock);
 
 	//get a new channel slot
-	event_id_t id = _get_free_slot();
+	event_id_t id = _getFreeSlot();
 	channel_s& channel = m_channelBuffer[id];
 
 	channel.id = id;
@@ -61,15 +61,15 @@ Looper::event_id_t Looper::register_event(socket_t sockfd,
 
 	//update to poll
 	if ((event & kRead) != 0)
-		_update_channel_add_event(channel, kRead);
+		_updateChannelAddEvent(channel, kRead);
     if ((event & kWrite) != 0)
-        _update_channel_add_event(channel, kWrite);
+        _updateChannelAddEvent(channel, kWrite);
     
 	return id;
 }
 
 //-------------------------------------------------------------------------------------
-Looper::event_id_t Looper::register_timer_event(uint32_t milliSeconds,
+Looper::event_id_t Looper::registerTimeEvent(uint32_t milliSeconds,
 	void* param,
 	timer_callback _on_timer)
 {
@@ -77,7 +77,7 @@ Looper::event_id_t Looper::register_timer_event(uint32_t milliSeconds,
 	sys_api::auto_mutex lock(m_lock);
 
 	//get a new channel slot
-	event_id_t id = _get_free_slot();
+	event_id_t id = _getFreeSlot();
 	channel_s& channel = m_channelBuffer[id];
 
 	timer_s* timer = new timer_s();
@@ -90,14 +90,14 @@ Looper::event_id_t Looper::register_timer_event(uint32_t milliSeconds,
 	channel.param = timer;
 	channel.active = false;
 	channel.timer = true;
-	channel.on_read = _on_timer_event_callback;
+	channel.on_read = _onTimerEventCallback;
 	channel.on_write = 0;
 
 #ifdef CY_SYS_WINDOWS
-	channel.fd = timer->pipe.get_read_port();
+	channel.fd = timer->pipe.getReadPort();
 
 	//create windows timer queue
-	if (!CreateTimerQueueTimer(&(timer->htimer), 0, _on_windows_timer, timer, milliSeconds, milliSeconds, WT_EXECUTEINTIMERTHREAD)) {
+	if (!CreateTimerQueueTimer(&(timer->htimer), 0, _onWindowsTimer, timer, milliSeconds, milliSeconds, WT_EXECUTEINTIMERTHREAD)) {
 		//error...
 		CY_LOG(L_FATAL, "CreateTimerQueueTimer Failed");
         delete timer;
@@ -130,12 +130,12 @@ Looper::event_id_t Looper::register_timer_event(uint32_t milliSeconds,
 #endif
 
 	//add kRead event to poll
-	_update_channel_add_event(channel, kRead);
+	_updateChannelAddEvent(channel, kRead);
 	return id;
 }
 
 //-------------------------------------------------------------------------------------
-void Looper::delete_event(event_id_t id)
+void Looper::deleteEvent(event_id_t id)
 {
 	assert(sys_api::threadGetCurrentID() == m_current_thread);
 	if (id == INVALID_EVENT_ID) return;
@@ -163,29 +163,29 @@ void Looper::delete_event(event_id_t id)
 }
 
 //-------------------------------------------------------------------------------------
-void Looper::disable_read(event_id_t id)
+void Looper::disableRead(event_id_t id)
 {
 	sys_api::auto_mutex lock(m_lock);
 	if (id == INVALID_EVENT_ID) return;
 	assert((size_t)id < m_channelBuffer.size());
 
 	channel_s& channel = m_channelBuffer[id];
-	_update_channel_remove_event(channel, kRead);
+	_updateChannelRemoveEvent(channel, kRead);
 }
 
 //-------------------------------------------------------------------------------------
-void Looper::enable_read(event_id_t id)
+void Looper::enableRead(event_id_t id)
 {
 	sys_api::auto_mutex lock(m_lock);
 	if (id == INVALID_EVENT_ID) return;
 	assert((size_t)id < m_channelBuffer.size());
 
 	channel_s& channel = m_channelBuffer[id];
-	_update_channel_add_event(channel, kRead);
+	_updateChannelAddEvent(channel, kRead);
 }
 
 //-------------------------------------------------------------------------------------
-bool Looper::is_read(event_id_t id) const
+bool Looper::isRead(event_id_t id) const
 {
 	sys_api::auto_mutex lock(m_lock);
 	if (id == INVALID_EVENT_ID) return false;
@@ -196,29 +196,29 @@ bool Looper::is_read(event_id_t id) const
 }
 
 //-------------------------------------------------------------------------------------
-void Looper::disable_write(event_id_t id)
+void Looper::disableWrite(event_id_t id)
 {
 	sys_api::auto_mutex lock(m_lock);
 	if (id == INVALID_EVENT_ID) return;
 	assert((size_t)id < m_channelBuffer.size());
 
 	channel_s& channel = m_channelBuffer[id];
-	_update_channel_remove_event(channel, kWrite);
+	_updateChannelRemoveEvent(channel, kWrite);
 }
 
 //-------------------------------------------------------------------------------------
-void Looper::enable_write(event_id_t id)
+void Looper::enableWrite(event_id_t id)
 {
 	sys_api::auto_mutex lock(m_lock);
 	if (id == INVALID_EVENT_ID) return;
 	assert((size_t)id < m_channelBuffer.size());
 
 	channel_s& channel = m_channelBuffer[id];
-	_update_channel_add_event(channel, kWrite);
+	_updateChannelAddEvent(channel, kWrite);
 }
 
 //-------------------------------------------------------------------------------------
-bool Looper::is_write(event_id_t id) const
+bool Looper::isWrite(event_id_t id) const
 {
 	sys_api::auto_mutex lock(m_lock);
 	if (id == INVALID_EVENT_ID) return false;
@@ -229,7 +229,7 @@ bool Looper::is_write(event_id_t id) const
 }
 
 //-------------------------------------------------------------------------------------
-void Looper::disable_all(event_id_t id)
+void Looper::disableAll(event_id_t id)
 {
 	sys_api::auto_mutex lock(m_lock);
 	if (id == INVALID_EVENT_ID) return;
@@ -237,10 +237,10 @@ void Looper::disable_all(event_id_t id)
 
 	channel_s& channel = m_channelBuffer[id];
     if(channel.event & kRead)
-        _update_channel_remove_event(channel, kRead);
+        _updateChannelRemoveEvent(channel, kRead);
     
     if(channel.event & kWrite)
-        _update_channel_remove_event(channel, kWrite);
+        _updateChannelRemoveEvent(channel, kWrite);
 }
 
 //-------------------------------------------------------------------------------------
@@ -249,12 +249,12 @@ void Looper::loop(void)
 	assert(sys_api::threadGetCurrentID() == m_current_thread);
 
 	//is quit request pushed before loop begin
-	if (is_quit_pending()) return;
+	if (isQuitPending()) return;
 
 	//register inner pipe first
 	Pipe inner_pipe;
 	m_inner_pipe = &inner_pipe;
-	Looper::event_id_t inner_event_id = register_event(m_inner_pipe->get_read_port(), kRead, this, _on_inner_pipe_touched, 0);
+	Looper::event_id_t inner_event_id = registerEvent(m_inner_pipe->getReadPort(), kRead, this, _onInnerPipeTouched, 0);
 
 	channel_list readList;
 	channel_list writeList;
@@ -268,7 +268,7 @@ void Looper::loop(void)
 		_poll(readList, writeList, true);
 		m_loop_counts++;
 
-		if (is_quit_pending()) break;
+		if (isQuitPending()) break;
 
 		//reactor
 		for (size_t i = 0; i < readList.size(); i++)
@@ -278,10 +278,10 @@ void Looper::loop(void)
 
 			c->on_read(c->id, c->fd, kRead, c->param);
 
-			if (is_quit_pending()) break;
+			if (isQuitPending()) break;
 		}
 
-		if (is_quit_pending()) break;
+		if (isQuitPending()) break;
 
 		for (size_t i = 0; i < writeList.size(); i++)
 		{
@@ -290,15 +290,15 @@ void Looper::loop(void)
 
 			c->on_write(c->id, c->fd, kWrite, c->param);
 
-			if (is_quit_pending()) break;
+			if (isQuitPending()) break;
 		}
 
-		if (is_quit_pending()) break;
+		if (isQuitPending()) break;
 	}
 
 	//it's the time to shutdown everything...
-	disable_all(inner_event_id);
-	delete_event(inner_event_id);
+	disableAll(inner_event_id);
+	deleteEvent(inner_event_id);
 	m_inner_pipe = nullptr;
 }
 
@@ -307,7 +307,7 @@ void Looper::step(void)
 {
 	assert(sys_api::threadGetCurrentID() == m_current_thread);
 	assert(m_inner_pipe==0);
-	if (is_quit_pending()) return;
+	if (isQuitPending()) return;
 
 	channel_list readList;
 	channel_list writeList;
@@ -316,7 +316,7 @@ void Looper::step(void)
 	_poll(readList, writeList, false);
 	m_loop_counts++;
 
-	if (is_quit_pending()) return;
+	if (isQuitPending()) return;
 
 	//reactor
 	for (size_t i = 0; i < readList.size(); i++)
@@ -326,7 +326,7 @@ void Looper::step(void)
 
 		c->on_read(c->id, c->fd, kRead, c->param);
 
-		if (is_quit_pending()) return;
+		if (isQuitPending()) return;
 	}
 
 	for (size_t i = 0; i < writeList.size(); i++)
@@ -336,19 +336,19 @@ void Looper::step(void)
 
 		c->on_write(c->id, c->fd, kWrite, c->param);
 
-		if (is_quit_pending()) return;
+		if (isQuitPending()) return;
 	}
 }
 
 //-------------------------------------------------------------------------------------
-void Looper::push_stop_request(void)
+void Looper::pushStopRequest(void)
 {
 	m_quit_cmd = 1;
-	_touch_inner_pipe();
+	_touchInnerPipe();
 }
 
 //-------------------------------------------------------------------------------------
-Looper::event_id_t Looper::_get_free_slot(void)
+Looper::event_id_t Looper::_getFreeSlot(void)
 {
 	for (;;)
 	{
@@ -383,7 +383,7 @@ Looper::event_id_t Looper::_get_free_slot(void)
 
 #ifdef CY_SYS_WINDOWS
 //-------------------------------------------------------------------------------------
-void Looper::_on_windows_timer(PVOID param, BOOLEAN timer_or_wait_fired)
+void Looper::_onWindowsTimer(PVOID param, BOOLEAN timer_or_wait_fired)
 {
 	(void)timer_or_wait_fired;
 	timer_s* timer = (timer_s*)param;
@@ -394,7 +394,7 @@ void Looper::_on_windows_timer(PVOID param, BOOLEAN timer_or_wait_fired)
 #endif
 
 //-------------------------------------------------------------------------------------
-void Looper::_on_timer_event_callback(event_id_t id, socket_t fd, event_t event, void* param)
+void Looper::_onTimerEventCallback(event_id_t id, socket_t fd, event_t event, void* param)
 {
 	(void)event;
 
@@ -410,7 +410,7 @@ void Looper::_on_timer_event_callback(event_id_t id, socket_t fd, event_t event,
 }
 
 //-------------------------------------------------------------------------------------
-void Looper::_touch_inner_pipe(void)
+void Looper::_touchInnerPipe(void)
 {
 	if (m_inner_pipe==0) return;
 
@@ -422,7 +422,7 @@ void Looper::_touch_inner_pipe(void)
 }
 
 //-------------------------------------------------------------------------------------
-void Looper::_on_inner_pipe_touched(event_id_t , socket_t fd, event_t , void* param)
+void Looper::_onInnerPipeTouched(event_id_t , socket_t fd, event_t , void* param)
 {
 	uint64_t touch = 0;
 	socket_api::read(fd, &touch, sizeof(touch));

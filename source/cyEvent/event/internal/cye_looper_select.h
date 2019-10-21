@@ -18,8 +18,8 @@ protected:
 		channel_list& writeChannelList,
 		bool block);
 	/// Changes the interested I/O events.
-	virtual void _update_channel_add_event(channel_s& channel, event_t event);
-	virtual void _update_channel_remove_event(channel_s& channel, event_t event);
+	virtual void _updateChannelAddEvent(channel_s& channel, event_t event);
+	virtual void _updateChannelRemoveEvent(channel_s& channel, event_t event);
 
 private:
 	fd_set	m_master_read_fd_set;
@@ -42,8 +42,8 @@ protected:
 	event_id_t m_active_head;	//active list in fd_set;
 
 private:
-	void _insert_to_active_list(channel_s& channel);
-	void _remove_from_active_list(channel_s& channel);
+	void _insertToActiveList(channel_s& channel);
+	void _removeFromActiveList(channel_s& channel);
 
 public:
 	Looper_select();

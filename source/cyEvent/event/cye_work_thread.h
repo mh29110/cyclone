@@ -28,15 +28,15 @@ public:
 	void setOnMessageFunction(MessageCallback func) { m_onMessage = func; }
 
 	//// send message to this work thread (thread safe)
-	void send_message(uint16_t id, uint16_t size, const char* message);
-	void send_message(const Packet* message);
-	void send_message(const Packet** message, int32_t counts);
+	void sendMessage(uint16_t id, uint16_t size, const char* message);
+	void sendMessage(const Packet* message);
+	void sendMessage(const Packet** message, int32_t counts);
 
 	//// get work thread looper (thread safe)
-	Looper* get_looper(void) const { return m_looper; }
+	Looper* getLooper(void) const { return m_looper; }
 
 	//// get work thread name (thread safe)
-	const char* get_name(void) const { return m_name.c_str(); }
+	const char* getName(void) const { return m_name.c_str(); }
 
 	//// join work thread(thread safe)
 	void join(void);
@@ -61,10 +61,10 @@ private:
 		atomic_int32_t	_ready;
 	};
 	/// work thread function
-	void _work_thread(void* param);
+	void _workThread(void* param);
 
 	//// on work thread receive message
-	void _on_message(void);
+	void _onMessage(void);
 
 public:
 	WorkThread();

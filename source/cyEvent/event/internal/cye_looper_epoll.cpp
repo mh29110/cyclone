@@ -112,7 +112,7 @@ bool Looper_epoll::_set_event(channel_s& channel, int operation, uint32_t events
 }
 
 //-------------------------------------------------------------------------------------
-void Looper_epoll::_update_channel_add_event(channel_s& channel, event_t event)
+void Looper_epoll::_updateChannelAddEvent(channel_s& channel, event_t event)
 {
 	if (channel.event == event || event == kNone) return;
 
@@ -138,7 +138,7 @@ void Looper_epoll::_update_channel_add_event(channel_s& channel, event_t event)
 }
 
 //-------------------------------------------------------------------------------------
-void Looper_epoll::_update_channel_remove_event(channel_s& channel, event_t event)
+void Looper_epoll::_updateChannelRemoveEvent(channel_s& channel, event_t event)
 {
 	if ((channel.event & event) == kNone || !channel.active) return;
 	uint32_t event_to_set = 0;

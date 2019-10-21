@@ -113,7 +113,7 @@ bool Looper_kqueue::_add_changes(channel_s& channel, int16_t filter, uint16_t fl
 }
 
 //-------------------------------------------------------------------------------------
-void Looper_kqueue::_update_channel_add_event(channel_s& channel, event_t event)
+void Looper_kqueue::_updateChannelAddEvent(channel_s& channel, event_t event)
 {
     assert(event==kRead || event==kWrite);
     int16_t filter = 0;
@@ -140,7 +140,7 @@ void Looper_kqueue::_update_channel_add_event(channel_s& channel, event_t event)
 }
 
 //-------------------------------------------------------------------------------------
-void Looper_kqueue::_update_channel_remove_event(channel_s& channel, event_t event)
+void Looper_kqueue::_updateChannelRemoveEvent(channel_s& channel, event_t event)
 {
     assert(event==kRead || event==kWrite);
     

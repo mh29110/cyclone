@@ -35,31 +35,31 @@ ServerWorkThread::~ServerWorkThread()
 }
 
 //-------------------------------------------------------------------------------------
-void ServerWorkThread::send_message(uint16_t id, uint16_t size, const char* message)
+void ServerWorkThread::sendMessage(uint16_t id, uint16_t size, const char* message)
 {
 	assert(m_work_thread);
 
-	m_work_thread->send_message(id, size, message);
+	m_work_thread->sendMessage(id, size, message);
 }
 
 //-------------------------------------------------------------------------------------
-void ServerWorkThread::send_message(const Packet* message)
+void ServerWorkThread::sendMessage(const Packet* message)
 {
 	assert(m_work_thread);
-	m_work_thread->send_message(message);
+	m_work_thread->sendMessage(message);
 }
 
 //-------------------------------------------------------------------------------------
-void ServerWorkThread::send_message(const Packet** message, int32_t counts)
+void ServerWorkThread::sendMessage(const Packet** message, int32_t counts)
 {
 	assert(m_work_thread);
-	m_work_thread->send_message(message, counts);
+	m_work_thread->sendMessage(message, counts);
 }
 
 //-------------------------------------------------------------------------------------
 bool ServerWorkThread::is_in_workthread(void) const
 {
-	return sys_api::threadGetCurrentID() == m_work_thread->get_looper()->get_thread_id();
+	return sys_api::threadGetCurrentID() == m_work_thread->getLooper()->getThreadID();
 }
 
 //-------------------------------------------------------------------------------------
@@ -79,7 +79,7 @@ bool ServerWorkThread::_on_workthread_start(void)
 	TcpServer::WorkThreadStartCallback& onWorkThreadStart = m_server->m_listener.onWorkThreadStart;
 
 	if(onWorkThreadStart)
-		onWorkThreadStart(m_server, get_index(), m_work_thread->get_looper());
+		onWorkThreadStart(m_server, get_index(), m_work_thread->getLooper());
 	return true;
 }
 
@@ -100,7 +100,7 @@ void ServerWorkThread::_on_workthread_message(Packet* message)
 		memcpy(&newConnectionCmd, message->get_packet_content(), sizeof(NewConnectionCmd));
 
 		//create tcp connection 
-		ConnectionPtr conn = std::make_shared<Connection>(m_server->get_next_connection_id(), newConnectionCmd.sfd, m_work_thread->get_looper(), this);
+		ConnectionPtr conn = std::make_shared<Connection>(m_server->get_next_connection_id(), newConnectionCmd.sfd, m_work_thread->getLooper(), this);
 		
 		//bind onMessage function
 		if (server_listener.onMessage) {
@@ -156,7 +156,7 @@ void ServerWorkThread::_on_workthread_message(Packet* message)
 		//if all connection is shutdown, and server is in shutdown process, quit the loop
 		if (m_connections.empty() && closeConnectionCmd.shutdown_ing > 0) {
 			//push loop quit command
-			m_work_thread->get_looper()->push_stop_request();
+			m_work_thread->getLooper()->pushStopRequest();
 			return;
 		}
 	}
@@ -165,7 +165,7 @@ void ServerWorkThread::_on_workthread_message(Packet* message)
 		//all connection is disconnect, just quit the loop
 		if (m_connections.empty()) {
 			//push loop request command
-			m_work_thread->get_looper()->push_stop_request();
+			m_work_thread->getLooper()->pushStopRequest();
 			return;
 		}
 
@@ -219,7 +219,7 @@ void ServerWorkThread::_debug(DebugCmd&)
 	m_debuger->updateDebugValue(key_temp, (int32_t)m_connections.size());
 
 	//Debug Looper
-	Looper* looper = m_work_thread->get_looper();
+	Looper* looper = m_work_thread->getLooper();
 	looper->debug(m_debuger, m_name.c_str());
 
 	//Debug all connections

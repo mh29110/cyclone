@@ -20,10 +20,10 @@ public:
 
 public:
 	SocketPair(void* _param) : param(_param) , write_counts(0){
-		Pipe::construct_socket_pipe(m_fd);
+		Pipe::constructSocketPipe(m_fd);
 	}
 	~SocketPair() {
-		Pipe::destroy_socket_pipe(m_fd);
+		Pipe::destroySocketPipe(m_fd);
 	}
 };
 
@@ -65,7 +65,7 @@ static void _onRead(Looper::event_id_t id, socket_t fd, Looper::event_t event, v
 		}
 	}
 	else {
-		data->looper->disable_all(id);
+		data->looper->disableAll(id);
 
 		(data->closed_counts)++;
 
@@ -85,7 +85,7 @@ static void _readThreadFunction(void* param)
 	for (size_t i = 0; i < data->socketPairs.size(); i++) {
 		SocketPair* sp = data->socketPairs[i];
 
-		sp->event_id = looper->register_event(sp->m_fd[0], Looper::kRead, sp, _onRead, 0);
+		sp->event_id = looper->registerEvent(sp->m_fd[0], Looper::kRead, sp, _onRead, 0);
 	}
 
 	sys_api::signalNotify(data->ready_signal);
@@ -128,7 +128,7 @@ static void _writeThreadFunction(void* param)
 
 	for (size_t i = 0; i < data->socketPairs.size(); i++) {
 		SocketPair* sp = data->socketPairs[i];
-		sp->event_id = looper->register_event(sp->m_fd[0], Looper::kWrite, sp, 0, _onWrite);
+		sp->event_id = looper->registerEvent(sp->m_fd[0], Looper::kWrite, sp, 0, _onWrite);
 	}
 
 	sys_api::signalNotify(data->ready_signal);
@@ -196,11 +196,11 @@ TEST(EventLooper, ReadAndCloseSocket)
 			EXPECT_TRUE(data.socketPairs[i]->rb.empty());
 		}
 
-		EXPECT_GE(data.looper->get_loop_counts(), 1ull);
-		EXPECT_LE(data.looper->get_loop_counts(), data.active_counts + 1); //read event(s) + inner pipe register event
+		EXPECT_GE(data.looper->getLoopCounts(), 1ull);
+		EXPECT_LE(data.looper->getLoopCounts(), data.active_counts + 1); //read event(s) + inner pipe register event
 
 		//quit...
-		data.looper->push_stop_request();
+		data.looper->pushStopRequest();
 		sys_api::threadJoin(thread);
 
 		for (size_t i = 0; i < data.socketPairs.size(); i++) {
@@ -265,11 +265,11 @@ TEST(EventLooper, ReadAndCloseSocket)
 			}
 		}
 
-		EXPECT_GE(data.looper->get_loop_counts(), 1ull);
-		EXPECT_LE(data.looper->get_loop_counts(), data.close_counts + 1); //close event(s) + inner pipe register event
+		EXPECT_GE(data.looper->getLoopCounts(), 1ull);
+		EXPECT_LE(data.looper->getLoopCounts(), data.close_counts + 1); //close event(s) + inner pipe register event
 
 		//quit...
-		data.looper->push_stop_request();
+		data.looper->pushStopRequest();
 		sys_api::threadJoin(thread);
 
 		for (size_t i = 0; i < data.socketPairs.size(); i++) {
@@ -306,10 +306,10 @@ TEST(EventLooper, WriteSocket)
 		sys_api::threadSleep(100); //fly some time
 
 		//quit...
-		data.looper->push_stop_request();
+		data.looper->pushStopRequest();
 		sys_api::signalWait(data.loop_stoped_signal);
 		
-		uint64_t loop_counts = data.looper->get_loop_counts();
+		uint64_t loop_counts = data.looper->getLoopCounts();
 
 		sys_api::signalNotify(data.quit_signal);
 		sys_api::threadJoin(thread);

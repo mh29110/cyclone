@@ -140,7 +140,7 @@ void TcpServer::stop_listen(size_t index)
 
 	StopListenCmd cmd;
 	cmd.index = index;
-	m_accept_thread.send_message(StopListenCmd::ID, sizeof(cmd), (const char*)&cmd);
+	m_accept_thread.sendMessage(StopListenCmd::ID, sizeof(cmd), (const char*)&cmd);
 }
 
 //-------------------------------------------------------------------------------------
@@ -161,11 +161,11 @@ void TcpServer::stop(void)
 
 	//shutdown the the accept thread
 	ShutdownCmd shutdownCmd;
-	m_accept_thread.send_message(ShutdownCmd::ID, sizeof(shutdownCmd), (const char*)&shutdownCmd);
+	m_accept_thread.sendMessage(ShutdownCmd::ID, sizeof(shutdownCmd), (const char*)&shutdownCmd);
 
 	//shutdown all connection
 	for (auto work : m_work_thread_pool){
-		work->send_message(ServerWorkThread::ShutdownCmd::ID, 0, 0);
+		work->sendMessage(ServerWorkThread::ShutdownCmd::ID, 0, 0);
 	}
 }
 
@@ -194,7 +194,7 @@ void TcpServer::_on_accept_event(Looper::event_id_t id, socket_t fd, Looper::eve
 	//write new connection command(cmd, socket_t)		
 	ServerWorkThread::NewConnectionCmd newConnectionCmd;
 	newConnectionCmd.sfd = connfd;
-	work->send_message(ServerWorkThread::NewConnectionCmd::ID, sizeof(newConnectionCmd), (const char*)&newConnectionCmd);
+	work->sendMessage(ServerWorkThread::NewConnectionCmd::ID, sizeof(newConnectionCmd), (const char*)&newConnectionCmd);
 
 	CY_LOG(L_TRACE, "accept a socket, send to work thread %d ", index);
 }
@@ -209,7 +209,7 @@ bool TcpServer::_on_accept_start(void)
 		auto& event_id = std::get<1>(listen_socket);
 
 		//register accept event
-		event_id = m_accept_thread.get_looper()->register_event(sfd,
+		event_id = m_accept_thread.getLooper()->registerEvent(sfd,
 			Looper::kRead,
 			this,
 			std::bind(&TcpServer::_on_accept_event, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
@@ -232,22 +232,22 @@ void TcpServer::_on_accept_message(Packet* message)
 
 	uint16_t msg_id = message->get_packet_id();
 	if (msg_id == ShutdownCmd::ID) {
-		Looper* looper = m_accept_thread.get_looper();
+		Looper* looper = m_accept_thread.getLooper();
 
 		//close all listen socket(s)
 		for (auto listen_socket : m_acceptor_sockets){
 			auto& event_id = std::get<1>(listen_socket);
 
 			if (event_id != Looper::INVALID_EVENT_ID) {
-				looper->disable_all(event_id);
-				looper->delete_event(event_id);
+				looper->disableAll(event_id);
+				looper->deleteEvent(event_id);
 				event_id = Looper::INVALID_EVENT_ID;
 			}
 		}
 		m_acceptor_sockets.clear();
 
 		//stop looper
-		looper->push_stop_request();
+		looper->pushStopRequest();
 	}
 	else if (msg_id == DebugCmd::ID) {
 		//TODO: debug accept thread
@@ -257,15 +257,15 @@ void TcpServer::_on_accept_message(Packet* message)
 		StopListenCmd stopListenCmd;
 		memcpy(&stopListenCmd, message->get_packet_content(), sizeof(stopListenCmd));
 
-		Looper* looper = m_accept_thread.get_looper();
+		Looper* looper = m_accept_thread.getLooper();
 		auto& listen_socket = m_acceptor_sockets[stopListenCmd.index];
 		auto& sfd = std::get<0>(listen_socket);
 		auto& event_id = std::get<1>(listen_socket);
 
 		//disable event
 		if (event_id != Looper::INVALID_EVENT_ID) {
-			looper->disable_all(event_id);
-			looper->delete_event(event_id);
+			looper->disableAll(event_id);
+			looper->deleteEvent(event_id);
 			event_id = Looper::INVALID_EVENT_ID;
 		}
 		//close socket
@@ -302,7 +302,7 @@ void TcpServer::shutdown_connection(ConnectionPtr conn)
 	ServerWorkThread::CloseConnectionCmd closeConnectionCmd;
 	closeConnectionCmd.conn_id = conn->get_id();
 	closeConnectionCmd.shutdown_ing = m_shutdown_ing;
-	work->send_message(ServerWorkThread::CloseConnectionCmd::ID, sizeof(closeConnectionCmd), (const char*)&closeConnectionCmd);
+	work->sendMessage(ServerWorkThread::CloseConnectionCmd::ID, sizeof(closeConnectionCmd), (const char*)&closeConnectionCmd);
 }
 
 //-------------------------------------------------------------------------------------
@@ -311,7 +311,7 @@ void TcpServer::send_work_message(int32_t work_thread_index, const Packet* messa
 	assert(work_thread_index >= 0 && work_thread_index < m_work_thread_counts);
 
 	ServerWorkThread* work = m_work_thread_pool[(size_t)work_thread_index];
-	work->send_message(message);
+	work->sendMessage(message);
 }
 
 //-------------------------------------------------------------------------------------
@@ -320,7 +320,7 @@ void TcpServer::send_work_message(int32_t work_thread_index, const Packet** mess
 	assert(work_thread_index >= 0 && work_thread_index < m_work_thread_counts && counts>0);
 
 	ServerWorkThread* work = m_work_thread_pool[(size_t)work_thread_index];
-	work->send_message(message, counts);
+	work->sendMessage(message, counts);
 }
 
 //-------------------------------------------------------------------------------------
@@ -339,12 +339,12 @@ void TcpServer::debug(void)
 	//send to work thread
 	ServerWorkThread::DebugCmd cmd;
 	for (auto work : m_work_thread_pool) {
-		work->send_message(ServerWorkThread::DebugCmd::ID, sizeof(cmd), (const char*)&cmd);
+		work->sendMessage(ServerWorkThread::DebugCmd::ID, sizeof(cmd), (const char*)&cmd);
 	}
 
 	//send to accept thread
 	DebugCmd acceptDebugCmd;
-	m_accept_thread.send_message(DebugCmd::ID, sizeof(acceptDebugCmd), (const char*)&acceptDebugCmd);
+	m_accept_thread.sendMessage(DebugCmd::ID, sizeof(acceptDebugCmd), (const char*)&acceptDebugCmd);
 }
 
 }

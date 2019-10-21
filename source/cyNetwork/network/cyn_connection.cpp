@@ -42,7 +42,7 @@ Connection::Connection(int32_t id, socket_t sfd, Looper* looper, void* param)
 	m_name = temp;
 
 	//register socket event
-	m_event_id = m_looper->register_event(m_socket,
+	m_event_id = m_looper->registerEvent(m_socket,
 		Looper::kRead,			//care read event only
 		this,
 		std::bind(&Connection::_on_socket_read, this),
@@ -72,7 +72,7 @@ void Connection::send(const char* buf, size_t len)
 {
 	if (buf == nullptr || len == 0) return;
 
-	if (sys_api::threadGetCurrentID() == m_looper->get_thread_id())
+	if (sys_api::threadGetCurrentID() == m_looper->getThreadID())
 	{
 		_send(buf, len);
 	}
@@ -92,7 +92,7 @@ void Connection::send(const char* buf, size_t len)
 		m_writeBuf.memcpyInto(buf, len);
 
 		//enable write event, wait socket ready
-		m_looper->enable_write(m_event_id);
+		m_looper->enableWrite(m_event_id);
 
 	}
 }
@@ -107,7 +107,7 @@ bool Connection::_is_writeBuf_empty(void) const
 //-------------------------------------------------------------------------------------
 void Connection::_send(const char* buf, size_t len)
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 
 	bool faultError = false;
 	size_t remaining = len;
@@ -121,7 +121,7 @@ void Connection::_send(const char* buf, size_t len)
 	}
 
 	//nothing in write buf, send it diretly
-	if (!(m_looper->is_write(m_event_id)) && _is_writeBuf_empty())
+	if (!(m_looper->isWrite(m_event_id)) && _is_writeBuf_empty())
 	{
 		nwrote = socket_api::write(m_socket, buf, len);
 		if (nwrote >= 0)
@@ -157,12 +157,12 @@ void Connection::_send(const char* buf, size_t len)
 		m_writeBuf.memcpyInto(buf + nwrote, remaining);
 
 		//enable write event, wait socket ready
-		m_looper->enable_write(m_event_id);
+		m_looper->enableWrite(m_event_id);
 	}
 
 	//shutdown if socket work with fault
 	if (faultError) {
-		m_looper->disable_all(m_event_id);
+		m_looper->disableAll(m_event_id);
 		shutdown();
 	}
 }
@@ -170,14 +170,14 @@ void Connection::_send(const char* buf, size_t len)
 //-------------------------------------------------------------------------------------
 void Connection::shutdown(void)
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 	assert(m_state == kConnected || m_state==kDisconnecting);
 
 	//set the state to disconnecting...
 	m_state = kDisconnecting;
 
 	//something still working? wait 
-	if (m_looper->is_write(m_event_id) && !_is_writeBuf_empty()) return;
+	if (m_looper->isWrite(m_event_id) && !_is_writeBuf_empty()) return;
 	
 	//ok, we can close the socket now
 	socket_api::shutdown(m_socket);
@@ -187,7 +187,7 @@ void Connection::shutdown(void)
 //-------------------------------------------------------------------------------------
 void Connection::_on_socket_read(void)
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 
 	ssize_t len = m_readBuf.readSocket(m_socket);
 
@@ -213,10 +213,10 @@ void Connection::_on_socket_read(void)
 //-------------------------------------------------------------------------------------
 void Connection::_on_socket_write(void)
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 	assert(m_state == kConnected || m_state == kDisconnecting);
 	
-	if (m_looper->is_write(m_event_id))
+	if (m_looper->isWrite(m_event_id))
 	{
 		sys_api::auto_mutex lock(m_writeBufLock);
 		assert(!m_writeBuf.empty());
@@ -228,7 +228,7 @@ void Connection::_on_socket_write(void)
 		ssize_t len = m_writeBuf.writeSocket(m_socket);
 		if (len > 0) {
 			if (m_writeBuf.empty()) {
-				m_looper->disable_write(m_event_id);
+				m_looper->disableWrite(m_event_id);
 
 				//disconnecting? this is the last message send to client, we can shut it down again
 				if (m_state == kDisconnecting) {
@@ -247,7 +247,7 @@ void Connection::_on_socket_write(void)
 //-------------------------------------------------------------------------------------
 void Connection::_on_socket_close(void)
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 	assert(m_state == kConnected || m_state == kDisconnecting);
 
 	ConnectionPtr thisPtr = shared_from_this();
@@ -256,8 +256,8 @@ void Connection::_on_socket_close(void)
 	m_state = kDisconnected;
 
 	//delete looper event
-	m_looper->disable_all(m_event_id);
-	m_looper->delete_event(m_event_id);
+	m_looper->disableAll(m_event_id);
+	m_looper->deleteEvent(m_event_id);
 	m_event_id = Looper::INVALID_EVENT_ID;
 	
 	//logic callback
@@ -287,7 +287,7 @@ void Connection::_on_socket_error(void)
 //-------------------------------------------------------------------------------------
 void Connection::set_name(const char* name)
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 
 	m_name = name;
 }

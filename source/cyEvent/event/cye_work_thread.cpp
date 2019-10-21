@@ -37,23 +37,23 @@ void WorkThread::start(const char* name)
 	//run the work thread
 	m_name = name ? name : "worker";
 	m_thread = sys_api::threadCreate(
-		std::bind(&WorkThread::_work_thread, this, std::placeholders::_1), &param, m_name.c_str());
+		std::bind(&WorkThread::_workThread, this, std::placeholders::_1), &param, m_name.c_str());
 
 	//wait work thread ready signal
 	while (param._ready == 0) sys_api::threadYield();	//BUSY LOOP!
 }
 
 //-------------------------------------------------------------------------------------
-void WorkThread::_work_thread(void* param)
+void WorkThread::_workThread(void* param)
 {
 	work_thread_param* thread_param = (work_thread_param*)param;
 
 	//create work event looper
-	m_looper = Looper::create_looper();
+	m_looper = Looper::createLooper();
 
 	//register pipe read event
-	m_looper->register_event(m_pipe.get_read_port(), Looper::kRead, this,
-		std::bind(&WorkThread::_on_message, this), 0);
+	m_looper->registerEvent(m_pipe.getReadPort(), Looper::kRead, this,
+		std::bind(&WorkThread::_onMessage, this), 0);
 
 	// set work thread ready signal
 	thread_param->_ready = 1;
@@ -61,7 +61,7 @@ void WorkThread::_work_thread(void* param)
 
 	//we start!
 	if (m_onStart && !m_onStart()) {
-		Looper::destroy_looper(m_looper);
+		Looper::destroyLooper(m_looper);
 		m_looper = nullptr;
 		return;
 	}
@@ -70,14 +70,14 @@ void WorkThread::_work_thread(void* param)
 	m_looper->loop();
 
 	//delete the looper
-	Looper::destroy_looper(m_looper);
+	Looper::destroyLooper(m_looper);
 	m_looper = nullptr;
 }
 
 //-------------------------------------------------------------------------------------
-void WorkThread::_on_message(void)
+void WorkThread::_onMessage(void)
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 	for (;;) {
 		int32_t counts;
 		if (m_pipe.read((char*)&counts, sizeof(counts)) <= 0) break;
@@ -100,7 +100,7 @@ void WorkThread::_on_message(void)
 }
 
 //-------------------------------------------------------------------------------------
-void WorkThread::send_message(uint16_t id, uint16_t size, const char* msg)
+void WorkThread::sendMessage(uint16_t id, uint16_t size, const char* msg)
 {
 	Packet* packet = Packet::alloc_packet();
 	packet->build(MESSAGE_HEAD_SIZE, id, size, msg);
@@ -112,7 +112,7 @@ void WorkThread::send_message(uint16_t id, uint16_t size, const char* msg)
 }
 
 //-------------------------------------------------------------------------------------
-void WorkThread::send_message(const Packet* message)
+void WorkThread::sendMessage(const Packet* message)
 {
 	Packet* packet = Packet::alloc_packet(message);
 	m_message_queue.push(packet);
@@ -122,7 +122,7 @@ void WorkThread::send_message(const Packet* message)
 }
 
 //-------------------------------------------------------------------------------------
-void WorkThread::send_message(const Packet** message, int32_t counts)
+void WorkThread::sendMessage(const Packet** message, int32_t counts)
 {
 	for (int32_t i = 0; i < counts; i++){
 		Packet* packet = Packet::alloc_packet(message[i]);

@@ -22,8 +22,8 @@ public:
 		channel_list& writeChannelList,
 		bool block);
 	/// Changes the interested I/O events.
-	virtual void _update_channel_add_event(channel_s& channel, event_t event);
-	virtual void _update_channel_remove_event(channel_s& channel, event_t event);
+	virtual void _updateChannelAddEvent(channel_s& channel, event_t event);
+	virtual void _updateChannelRemoveEvent(channel_s& channel, event_t event);
 
 private:
 	typedef std::vector<struct epoll_event> event_vector;

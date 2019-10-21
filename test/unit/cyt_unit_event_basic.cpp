@@ -16,41 +16,41 @@ TEST(EventLooper, Basic)
 	const auto& channels = looper.get_channel_buf();
 	CHECK_CHANNEL_SIZE(0, 0, 0);
 
-	Looper::event_id_t id = looper.register_timer_event(1, 0, 0);
+	Looper::event_id_t id = looper.registerTimeEvent(1, 0, 0);
 	CHECK_CHANNEL_SIZE(default_channel_counts, 1, default_channel_counts - 1);
 
-	looper.disable_all(id);
+	looper.disableAll(id);
 	CHECK_CHANNEL_SIZE(default_channel_counts, 0, default_channel_counts - 1);
 
-	looper.enable_read(id);
+	looper.enableRead(id);
 	CHECK_CHANNEL_SIZE(default_channel_counts, 1, default_channel_counts - 1);
 
-	looper.disable_all(id);
+	looper.disableAll(id);
 	CHECK_CHANNEL_SIZE(default_channel_counts, 0, default_channel_counts - 1);
 
-	looper.delete_event(id);
+	looper.deleteEvent(id);
 	CHECK_CHANNEL_SIZE(default_channel_counts, 0, default_channel_counts);
 
 	std::vector<Looper::event_id_t> id_buffer;
 	for (size_t i = 0; i < default_channel_counts; i++) {
-		id_buffer.push_back(looper.register_timer_event(1, 0, 0));
+		id_buffer.push_back(looper.registerTimeEvent(1, 0, 0));
 		CHECK_CHANNEL_SIZE(default_channel_counts, i+1, default_channel_counts - i - 1);
 	}
 
-	id_buffer.push_back(looper.register_timer_event(1, 0, 0));
+	id_buffer.push_back(looper.registerTimeEvent(1, 0, 0));
 	CHECK_CHANNEL_SIZE(default_channel_counts * 2, default_channel_counts + 1, default_channel_counts - 1);
 
-	looper.disable_all(id_buffer[id_buffer.size()-1]);
+	looper.disableAll(id_buffer[id_buffer.size()-1]);
 	CHECK_CHANNEL_SIZE(default_channel_counts * 2, default_channel_counts, default_channel_counts - 1);
 
-	looper.delete_event(id_buffer[id_buffer.size() - 1]);
+	looper.deleteEvent(id_buffer[id_buffer.size() - 1]);
 	CHECK_CHANNEL_SIZE(default_channel_counts * 2, default_channel_counts, default_channel_counts);
 
 	for (size_t i = 0; i < default_channel_counts; i++) {
-		looper.disable_all(id_buffer[i]);
+		looper.disableAll(id_buffer[i]);
 		CHECK_CHANNEL_SIZE(default_channel_counts * 2, default_channel_counts-i-1, default_channel_counts+i);
 
-		looper.delete_event(id_buffer[i]);
+		looper.deleteEvent(id_buffer[i]);
 		CHECK_CHANNEL_SIZE(default_channel_counts * 2, default_channel_counts-i-1, default_channel_counts+i+1);
 	}
 

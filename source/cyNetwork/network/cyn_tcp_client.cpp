@@ -11,8 +11,8 @@ namespace cyclone
 
 #define RELEASE_EVENT(looper, id) \
 	if (id != Looper::INVALID_EVENT_ID) { \
-		looper->disable_all(id); \
-		looper->delete_event(id); \
+		looper->disableAll(id); \
+		looper->deleteEvent(id); \
 		id = Looper::INVALID_EVENT_ID; \
 	}
 //-------------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ TcpClient::TcpClient(Looper* looper, void* param)
 //-------------------------------------------------------------------------------------
 TcpClient::~TcpClient()
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 
 	sys_api::mutexDestroy(m_connection_lock);
 	m_connection_lock = nullptr;
@@ -53,7 +53,7 @@ TcpClient::~TcpClient()
 //-------------------------------------------------------------------------------------
 bool TcpClient::connect(const Address& addr)
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 	assert(m_socket == INVALID_SOCKET);
 
 	sys_api::auto_mutex lock(m_connection_lock);
@@ -70,7 +70,7 @@ bool TcpClient::connect(const Address& addr)
 	m_serverAddr = addr;
 
 	//set event callback
-	m_socket_event_id = m_looper->register_event(m_socket, Looper::kRead | Looper::kWrite, this,
+	m_socket_event_id = m_looper->registerEvent(m_socket, Looper::kRead | Looper::kWrite, this,
 		std::bind(&TcpClient::_on_socket_read_write, this),
 		std::bind(&TcpClient::_on_socket_read_write, this)
 		);
@@ -144,7 +144,7 @@ void TcpClient::_on_connect_status_changed(bool timeout)
 //-------------------------------------------------------------------------------------
 void TcpClient::_abort_connect(uint32_t retry_sleep_ms)
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 	assert(get_connection_state() == Connection::kConnecting);
 
 	RELEASE_EVENT(m_looper, m_socket_event_id);
@@ -156,7 +156,7 @@ void TcpClient::_abort_connect(uint32_t retry_sleep_ms)
 
 	if (retry_sleep_ms>0) {
 		//retry connection? create retry the timer
-		m_retry_timer_id = m_looper->register_timer_event(retry_sleep_ms, this,
+		m_retry_timer_id = m_looper->registerTimeEvent(retry_sleep_ms, this,
 			std::bind(&TcpClient::_on_retry_connect_timer, this, std::placeholders::_1));
 	}
 }
@@ -164,7 +164,7 @@ void TcpClient::_abort_connect(uint32_t retry_sleep_ms)
 //-------------------------------------------------------------------------------------
 void TcpClient::disconnect(void)
 {
-	assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+	assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 	m_sendCache.reset();
 	switch (get_connection_state())
 	{
@@ -199,7 +199,7 @@ void TcpClient::_on_retry_connect_timer(Looper::event_id_t id)
 
 			//retry connection?
 			if (retry_sleep_ms>0) {
-				m_retry_timer_id = m_looper->register_timer_event(retry_sleep_ms, this,
+				m_retry_timer_id = m_looper->registerTimeEvent(retry_sleep_ms, this,
 					std::bind(&TcpClient::_on_retry_connect_timer, this, std::placeholders::_1));
 			}
 		}
@@ -221,7 +221,7 @@ void TcpClient::send(const char* buf, size_t len)
 	{
 	case Connection::kConnecting:
 	{
-		assert(sys_api::threadGetCurrentID() == m_looper->get_thread_id());
+		assert(sys_api::threadGetCurrentID() == m_looper->getThreadID());
 		m_sendCache.memcpyInto(buf, len);
 	}
 		break;

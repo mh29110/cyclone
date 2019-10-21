@@ -168,7 +168,7 @@ private:
 	//-------------------------------------------------------------------------------------
 	void _workThread(void)
 	{
-		m_looper = Looper::create_looper();
+		m_looper = Looper::createLooper();
 
         TcpClientPtr client1 = std::make_shared<TcpClient>(m_looper, nullptr);
 		client1->m_listener.onConnected = std::bind(&RelayPipe_DoubleOut::onConnected, this, _1, _2, _3, 1);
@@ -194,7 +194,7 @@ private:
 		client1 = nullptr;
 		client2 = nullptr;
 
-		Looper::destroy_looper(m_looper);
+		Looper::destroyLooper(m_looper);
 	}
 
 	//-------------------------------------------------------------------------------------
@@ -244,7 +244,7 @@ private:
         m_client2 = nullptr;
         
         sys_api::threadCreateDetached([this](void*) {
-            m_looper->push_stop_request();
+            m_looper->pushStopRequest();
         }, nullptr, nullptr);
 	}
 private:

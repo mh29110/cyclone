@@ -131,7 +131,7 @@ void Looper_select::_poll(
 }
 
 //-------------------------------------------------------------------------------------
-void Looper_select::_insert_to_active_list(channel_s& channel)
+void Looper_select::_insertToActiveList(channel_s& channel)
 {
 	if (channel.active) return;
 
@@ -150,7 +150,7 @@ void Looper_select::_insert_to_active_list(channel_s& channel)
 }
 
 //-------------------------------------------------------------------------------------
-void Looper_select::_remove_from_active_list(channel_s& channel)
+void Looper_select::_removeFromActiveList(channel_s& channel)
 {
 	if (!channel.active) return;
 
@@ -172,7 +172,7 @@ void Looper_select::_remove_from_active_list(channel_s& channel)
 }
 
 //-------------------------------------------------------------------------------------
-void Looper_select::_update_channel_add_event(channel_s& channel, event_t event)
+void Looper_select::_updateChannelAddEvent(channel_s& channel, event_t event)
 {
 	if (channel.event == event || event == kNone) return;
 	socket_t fd = channel.fd;
@@ -190,7 +190,7 @@ void Looper_select::_update_channel_add_event(channel_s& channel, event_t event)
 		FD_SET(fd, &m_master_read_fd_set);
 		m_max_read_counts++;
 		channel.event |= kRead;
-		_insert_to_active_list(channel);
+		_insertToActiveList(channel);
 #ifndef CY_SYS_WINDOWS
 		if (m_max_fd == INVALID_SOCKET || m_max_fd < fd)  m_max_fd = fd;
 #endif
@@ -201,17 +201,17 @@ void Looper_select::_update_channel_add_event(channel_s& channel, event_t event)
 		FD_SET(fd, &m_master_write_fd_set);
 		m_max_write_counts++;
 		channel.event |= kWrite;
-		_insert_to_active_list(channel);
+		_insertToActiveList(channel);
 #ifndef CY_SYS_WINDOWS
 		if (m_max_fd == INVALID_SOCKET || m_max_fd < fd)  m_max_fd = fd;
 #endif
 	}
 
-	_touch_inner_pipe();
+	_touchInnerPipe();
 }
 
 //-------------------------------------------------------------------------------------
-void Looper_select::_update_channel_remove_event(channel_s& channel, event_t event)
+void Looper_select::_updateChannelRemoveEvent(channel_s& channel, event_t event)
 {
 	if ((channel.event & event) == kNone || !channel.active) return;
 	socket_t fd = channel.fd;
@@ -238,7 +238,7 @@ void Looper_select::_update_channel_remove_event(channel_s& channel, event_t eve
 
 	if (channel.event == kNone)
 	{
-		_remove_from_active_list(channel);
+		_removeFromActiveList(channel);
 	}
 }
 

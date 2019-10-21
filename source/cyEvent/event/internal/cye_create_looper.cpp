@@ -12,7 +12,7 @@ namespace cyclone
 {
 
 //-------------------------------------------------------------------------------------
-Looper* Looper::create_looper(void)
+Looper* Looper::createLooper(void)
 {
 #if (CY_POLL_TECH==CY_POLL_EPOLL)
 	return new Looper_epoll();
@@ -24,7 +24,7 @@ Looper* Looper::create_looper(void)
 }
 
 //-------------------------------------------------------------------------------------
-void Looper::destroy_looper(Looper* looper)
+void Looper::destroyLooper(Looper* looper)
 {
 	delete looper;
 }

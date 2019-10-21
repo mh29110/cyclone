@@ -36,12 +36,12 @@ static void _timerFunction(Looper::event_id_t id, void* param)
 		((data->break_counts > 0) && (data->counts) >= (data->break_counts))) {
 		sys_api::signalNotify(data->end_signal);
 		//push loop quit command
-		data->looper->push_stop_request();
+		data->looper->pushStopRequest();
 		return;
 	}
 	
 	if ((data->pause_counts > 0) && (data->counts >= data->pause_counts)) {
-		data->looper->disable_all(id);
+		data->looper->disableAll(id);
 	}
 }
 
@@ -52,7 +52,7 @@ static void _threadFunction(void* param)
 	EventLooper_ForTest* looper = new EventLooper_ForTest();
 	data->looper = looper;
 
-	data->timer_id = looper->register_timer_event(data->freq, param, _timerFunction);
+	data->timer_id = looper->registerTimeEvent(data->freq, param, _timerFunction);
 	sys_api::signalNotify(data->begin_signal);
 
 	looper->loop();
@@ -98,14 +98,14 @@ static void _multiTimerThreadFunction(void* param)
 
 	for (size_t i = 0; i < data->timers.size(); i++) {
 		MultiTimerData& timer_data = data->timers[i];
-		timer_data.id = looper->register_timer_event(timer_data.freq, &(timer_data), _multiTimerFunction);
+		timer_data.id = looper->registerTimeEvent(timer_data.freq, &(timer_data), _multiTimerFunction);
 	}
 	sys_api::signalNotify(data->begin_signal);
 
 	for (;;) {
 		looper->step();
 
-		if (looper->is_quit_pending()) break;
+		if (looper->isQuitPending()) break;
 		if (sys_api::signalTimeWait(data->pause_signal, 0)) {
 			sys_api::signalWait(data->resume_signal);
 		}
@@ -191,12 +191,12 @@ TEST(EventLooper, Timer)
 
 		//resume
 		data.pause_counts = data.pause_counts*2;
-		data.looper->enable_read(data.timer_id);
+		data.looper->enableRead(data.timer_id);
 		sys_api::threadSleep((int32_t)sleep_time);
 		EXPECT_EQ(data.counts.load(), data.pause_counts);
 
 		//stop thread
-		data.looper->push_stop_request();
+		data.looper->pushStopRequest();
 		sys_api::threadJoin(thread);
 	}
 
@@ -248,7 +248,7 @@ TEST(EventLooper, MultiTimer)
 		}
 
 		//pause one of timer
-		data.looper->disable_all(data.timers[disable_timer_index].id);
+		data.looper->disableAll(data.timers[disable_timer_index].id);
 		CHECK_CHANNEL_SIZE(default_channel_counts, data.timers.size()-1, default_channel_counts - data.timers.size());
 
 		//resume and fly continue
@@ -271,7 +271,7 @@ TEST(EventLooper, MultiTimer)
 
 		//stop thread
 		sys_api::signalNotify(data.resume_signal);
-		data.looper->push_stop_request();
+		data.looper->pushStopRequest();
 		sys_api::threadJoin(thread);
 	}
 

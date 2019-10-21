@@ -105,7 +105,7 @@ void _push_function(void* param)
 
 		if (sndBuf.empty()) break;
 
-		ssize_t write_size = sndBuf.writeSocket(data->pipe.get_write_port());
+		ssize_t write_size = sndBuf.writeSocket(data->pipe.getWritePort());
 		if (write_size <= 0) {
 			sys_api::threadYield();
 			continue;
@@ -125,7 +125,7 @@ void _pop_function(void* param)
 	uint64_t read_data;
 
 	while (total_rcv_size<(data->total_size)) {
-		ssize_t read_size = rcvBuf.readSocket(data->pipe.get_read_port(), false);
+		ssize_t read_size = rcvBuf.readSocket(data->pipe.getReadPort(), false);
 		while (rcvBuf.size() >= sizeof(uint64_t)) {
 			EXPECT_EQ(sizeof(uint64_t), rcvBuf.memcpyOut(&read_data, sizeof(uint64_t)));
 			EXPECT_EQ(rnd.next(), read_data);

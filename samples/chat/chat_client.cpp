@@ -41,7 +41,7 @@ public:
 	//-------------------------------------------------------------------------------------
 	void clientThread(void)
 	{
-		Looper* looper = Looper::create_looper();
+		Looper* looper = Looper::createLooper();
 
         m_client = std::make_shared<TcpClient>(looper, nullptr);
 		m_client->m_listener.onConnected = std::bind(&ChatClient::onConnected, this, _1, _3);
@@ -52,7 +52,7 @@ public:
 		looper->loop();
 
 		m_client = nullptr;
-		Looper::destroy_looper(looper);
+		Looper::destroyLooper(looper);
 	}
 
 	//-------------------------------------------------------------------------------------

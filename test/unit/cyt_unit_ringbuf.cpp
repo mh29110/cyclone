@@ -458,11 +458,11 @@ TEST(RingBuf, Socket)
 
 		//send few bytes
 		rb_snd.memcpyInto(text_pattern, text_length);
-		EXPECT_EQ(text_length, (size_t)rb_snd.writeSocket(pipe.get_write_port()));
+		EXPECT_EQ(text_length, (size_t)rb_snd.writeSocket(pipe.getWritePort()));
 		CHECK_RINGBUF_EMPTY(rb_snd, RingBuf::kDefaultCapacity);
 
 		RingBuf rb_rcv;
-		EXPECT_EQ(text_length, (size_t)rb_rcv.readSocket(pipe.get_read_port()));
+		EXPECT_EQ(text_length, (size_t)rb_rcv.readSocket(pipe.getReadPort()));
 		CHECK_RINGBUF_SIZE(rb_rcv, text_length, RingBuf::kDefaultCapacity);
 		EXPECT_EQ(0, memcmp(rb_rcv.normalize(), text_pattern, text_length));
 		rb_rcv.discard(text_length);
@@ -483,8 +483,8 @@ TEST(RingBuf, Socket)
 		rb_rcv.discard(text_length);
 		CHECK_RINGBUF_SIZE(rb_rcv, text_length, RingBuf::kDefaultCapacity);
 
-		EXPECT_EQ(text_length, (size_t)rb_snd.writeSocket(pipe.get_write_port()));
-		EXPECT_EQ(text_length, (size_t)rb_rcv.readSocket(pipe.get_read_port()));
+		EXPECT_EQ(text_length, (size_t)rb_snd.writeSocket(pipe.getWritePort()));
+		EXPECT_EQ(text_length, (size_t)rb_rcv.readSocket(pipe.getReadPort()));
 		CHECK_RINGBUF_EMPTY(rb_snd, RingBuf::kDefaultCapacity);
 		CHECK_RINGBUF_SIZE(rb_rcv, text_length*2, RingBuf::kDefaultCapacity);
 
@@ -504,7 +504,7 @@ TEST(RingBuf, Socket)
 
 		EXPECT_EQ(RingBuf::kDefaultCapacity, pipe.write((const char*)buffer1, RingBuf::kDefaultCapacity));
 
-		EXPECT_EQ(RingBuf::kDefaultCapacity-text_length, (size_t)rb_rcv.readSocket(pipe.get_read_port(), false));
+		EXPECT_EQ(RingBuf::kDefaultCapacity-text_length, (size_t)rb_rcv.readSocket(pipe.getReadPort(), false));
 		CHECK_RINGBUF_SIZE(rb_rcv, RingBuf::kDefaultCapacity, RingBuf::kDefaultCapacity);
 
 		EXPECT_EQ(0, memcmp(rb_rcv.normalize(), text_pattern, text_length));
@@ -523,7 +523,7 @@ TEST(RingBuf, Socket)
 
 		EXPECT_EQ(RingBuf::kDefaultCapacity, pipe.write((const char*)buffer1, RingBuf::kDefaultCapacity));
 
-		EXPECT_EQ(RingBuf::kDefaultCapacity, rb_rcv.readSocket(pipe.get_read_port()));
+		EXPECT_EQ(RingBuf::kDefaultCapacity, rb_rcv.readSocket(pipe.getReadPort()));
 		CHECK_RINGBUF_SIZE(rb_rcv, text_length + RingBuf::kDefaultCapacity, (RingBuf::kDefaultCapacity + 1) * 2 - 1);
 
 		EXPECT_EQ(0, memcmp(rb_rcv.normalize(), text_pattern, text_length));
@@ -542,11 +542,11 @@ TEST(RingBuf, Socket)
 		CHECK_RINGBUF_SIZE(rb_snd, TEST_WRAP_SIZE * 4, RingBuf::kDefaultCapacity);
 
 		Pipe pipe;
-		EXPECT_EQ(TEST_WRAP_SIZE * 4, (size_t)rb_snd.writeSocket(pipe.get_write_port()));
+		EXPECT_EQ(TEST_WRAP_SIZE * 4, (size_t)rb_snd.writeSocket(pipe.getWritePort()));
 		CHECK_RINGBUF_EMPTY(rb_snd, RingBuf::kDefaultCapacity);
 
 		RingBuf rb_rcv;
-		EXPECT_EQ(TEST_WRAP_SIZE * 4, (size_t)rb_rcv.readSocket(pipe.get_read_port()));
+		EXPECT_EQ(TEST_WRAP_SIZE * 4, (size_t)rb_rcv.readSocket(pipe.getReadPort()));
 		CHECK_RINGBUF_SIZE(rb_rcv, TEST_WRAP_SIZE * 4, RingBuf::kDefaultCapacity);
 
 		EXPECT_EQ(0, memcmp(rb_rcv.normalize(), buffer1 + RingBuf::kDefaultCapacity - TEST_WRAP_SIZE * 2, TEST_WRAP_SIZE * 4));
