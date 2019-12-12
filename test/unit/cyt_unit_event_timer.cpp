@@ -133,10 +133,10 @@ TEST(EventLooper, Timer)
 		thread_t thread = sys_api::threadCreate(_threadFunction, &data, "timer");
 
 		sys_api::signalWait(data.begin_signal);
-		int64_t begin_time = sys_api::timeNow();
+		int64_t begin_time = sys_api::utcTimeNow();
 
 		sys_api::signalWait(data.end_signal);
-		int64_t end_time = sys_api::timeNow();
+		int64_t end_time = sys_api::utcTimeNow();
 
 		EXPECT_EQ(1, data.counts.load());
 		EXPECT_GE(end_time - begin_time, (data.freq - MAX_TIMER_ERROR) * 1000ll);
@@ -156,7 +156,7 @@ TEST(EventLooper, Timer)
 		thread_t thread = sys_api::threadCreate(_threadFunction, &data, "timer");
 
 		sys_api::signalWait(data.begin_signal);
-		int64_t begin_time = sys_api::timeNow();
+		int64_t begin_time = sys_api::utcTimeNow();
 
 		uint32_t sleep_time = data.freq * repeat_times + MAX_TIMER_ERROR;
 		sys_api::threadSleep((int32_t)sleep_time);
@@ -165,8 +165,10 @@ TEST(EventLooper, Timer)
 		sys_api::signalNotify(data.break_signal);
 		EXPECT_GE(current_index, repeat_times);
 		EXPECT_LE(current_index, repeat_times+1);
+
 		sys_api::threadJoin(thread);
-		int64_t end_time = sys_api::timeNow();
+		int64_t end_time = sys_api::utcTimeNow();
+
 		EXPECT_GE(end_time - begin_time, sleep_time * 1000ll);
 		EXPECT_LE(end_time - begin_time, (int64_t)(sleep_time + data.freq + MAX_TIMER_ERROR) * 1000ll);
 	}

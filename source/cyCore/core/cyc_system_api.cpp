@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright(C) thecodeway.com
 */
 #include <cy_core.h>
@@ -341,27 +341,23 @@ void signalNotify(signal_t s)
 }
 
 //-------------------------------------------------------------------------------------
-int64_t timeNow(void)
+int64_t utcTimeNow(void)
 {
+#ifdef CY_SYS_WINDOWS
+	FILETIME ftm;
+	::GetSystemTimeAsFileTime(&ftm);
+
+	uint64_t time = ((uint64_t)ftm.dwLowDateTime) + ((uint64_t)ftm.dwHighDateTime << 32);
+
+	// This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)
+	// until 00:00:00 January 1, 1970 
+	static const int64_t EPOCH = ((int64_t)116444736000000000LL);
+
+	//1 micro second =10 * (100 nano second)
+	return (int64_t)((time - EPOCH) / 10LL);
+#else
 	const int64_t kMicroSecondsPerSecond = 1000ll * 1000ll;
 
-#ifdef CY_SYS_WINDOWS
-	SYSTEMTIME ltm;
-	GetLocalTime(&ltm);
-
-	struct tm t;
-	t.tm_year = ltm.wYear - 1900;
-	t.tm_mon = ltm.wMonth - 1;
-	t.tm_mday = ltm.wDay;
-	t.tm_hour = ltm.wHour;
-	t.tm_min = ltm.wMinute;
-	t.tm_sec = ltm.wSecond;
-	t.tm_isdst = -1;
-
-	int64_t seconds = (int64_t)mktime(&t);
-	return seconds*kMicroSecondsPerSecond + ltm.wMilliseconds * 1000;
-
-#else
 	struct timeval tv;
 	gettimeofday(&tv, 0);
 	int64_t seconds = tv.tv_sec;
@@ -370,7 +366,7 @@ int64_t timeNow(void)
 }
 
 //-------------------------------------------------------------------------------------
-void timeNow(char* time_dest, size_t max_size, const char* format)
+void localTimeNow(char* time_dest, size_t max_size, const char* format)
 {
 	time_t local_time = time(0);
 	struct tm tm_now;
