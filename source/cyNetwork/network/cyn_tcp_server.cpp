@@ -245,7 +245,7 @@ void TcpServer::_on_accept_message(Packet* message)
 				event_id = Looper::INVALID_EVENT_ID;
 			}
 			if (sfd != INVALID_SOCKET) {
-				socket_api::close_socket(sfd);
+				socket_api::closeSocket(sfd);
 				sfd = INVALID_SOCKET;
 			}
 		}
